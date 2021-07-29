@@ -1,7 +1,7 @@
 History
 =======
 
-0.1.1 (unreleased)
+0.2.0 (2021-07-29)
 ------------------
 
 - Added support for full-day event

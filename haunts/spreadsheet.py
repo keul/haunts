@@ -77,6 +77,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
         # In case we changed day, let's restart from START_TIME
         if current_date != last_date:
             last_to_time = None
+        last_date = current_date
 
         # short circuit for date filters
         skip = len(days) > 0

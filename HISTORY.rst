@@ -4,8 +4,7 @@ History
 0.1.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Added support for full-day event
 
 0.1.0 (2021-07-10)
 ------------------

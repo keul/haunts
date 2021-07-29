@@ -78,9 +78,9 @@ Sheet format should be:
   The day where the event will be created
 
 **Spent**
-  (number)
+  (number or empty)
   
-  How long the event will last
+  How long the event will last. Leave empty to create a full-day event.
 
 **Project**
   (number)

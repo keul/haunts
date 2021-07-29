@@ -56,32 +56,51 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
         f"%Y-%m-%dT%H:%M:%S%z",
     )
 
-    duration = float(length)
-    delta = datetime.timedelta(hours=duration)
+    startParams = None
+    endParams = None
+    haveLength = length is not None and type(length) is not str
+    duration = None
+    if haveLength:
+        duration = float(length)
+        delta = datetime.timedelta(hours=duration)
+    else:
+        delta = datetime.timedelta(hours=0)
     end = start + delta
+
+    if haveLength:
+        startParams = {
+            "dateTime": start.isoformat(),
+        }
+        endParams = {
+            "dateTime": end.isoformat(),
+        }
+    else:
+        startParams = {
+            "date": start.isoformat()[:10],
+        }
+        endParams = {
+            "date": end.isoformat()[:10],
+        }
 
     event = {
         "summary": summary,
         "description": details,
-        "start": {
-            "dateTime": start.isoformat(),
-        },
-        "end": {
-            "dateTime": end.isoformat(),
-        },
+        "start": startParams,
+        "end": endParams,
     }
 
     LOGGER.debug(calendar, date, summary, details, length, event, from_time)
     event = service.events().insert(calendarId=calendar, body=event).execute()
     LOGGER.debug(event.items())
     print(
-        f'Created event "{summary}" ({duration}h) on calendar {event["organizer"]["displayName"]}'
+        f'Created event "{summary}" ({f"{duration}h" if duration else "full day"}) on calendar {event["organizer"]["displayName"]}'
     )
-    return {
+    event_data = {
         "id": event["id"],
-        "next_slot": end.strftime("%H:%M"),
+        "next_slot": end.strftime("%H:%M") if haveLength else from_time,
         "link": event["htmlLink"],
     }
+    return event_data
 
 
 def execute(config_dir):

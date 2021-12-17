@@ -79,7 +79,7 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
             "date": start.isoformat()[:10],
         }
         endParams = {
-            "date": end.isoformat()[:10],
+            "date": (end + datetime.timedelta(days=1)).isoformat()[:10],
         }
 
     event = {

@@ -14,7 +14,7 @@ B-Open Haunt
 What is does
 ============
 
-Fill Google Calendars with events generated reading a sheet taken from a Google Spreadsheet.
+Fill Google Calendars with events taken from a Google Spreadsheet.
 
 How to install
 ==============
@@ -153,9 +153,9 @@ For every rows that match, *haunts* will:
 TODO and known issues
 =====================
 
-* **Rows in the momth sheets must be sorted ascending**
+* **Rows in the sheet must be sorted ascending**
 * Other actions maybe? Like *E* (for edit)
-* *haunts* will not check for already filled time slots, so overlapping of events may happens
+* *haunts* will not check for already filled time slots (yet?), so overlapping of events may happens
 
 Why?!
 =====

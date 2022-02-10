@@ -1,7 +1,7 @@
 History
 =======
 
-0.2.1 (unreleased)
+0.2.1 (2022-02-10)
 ------------------
 
 - Fixed full day criteria

@@ -26,10 +26,14 @@ How to install
 Prerequisites
 =============
 
-To use Google Calendar and Google Spreasheet APIs you must generate a Google API application and download a *credentials.json*.
-This file must be put inside the ``~/.haunts`` directory (this will be generated automatically, see below).
+To use Google Calendar and Google Spreasheet APIs you must generate a Google API application and download a *credentials.json*:
 
-See https://cloud.google.com/docs/authentication/getting-started
+* Run *haunts* for the first time. It will create the ``~/.haunts`` folder.
+* Go to https://console.cloud.google.com/home/dashboard and create a Project called *haunts*.
+* In the search bar, search *Credentials APIs and services* and enable it.
+* Click on *Create Credentials*, set *Desktop* as the *type* and save the json file as ``~/.haunts/credentials.json``.
+* In the search bar, search *Google Sheets API* and *Google Calendar API* and activate them.
+* Run ``haunts``, it will ask you to authenticate to both the Google Sheets and the Google Calendar APIs. It will create the following files: ``~/.haunts/calendars-token.json`` and ``~/.haunts/sheets-token.json``
 
 How to use
 ==========

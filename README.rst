@@ -1,6 +1,6 @@
-============
-B-Open Haunt
-============
+=============
+B-Open Haunts
+=============
 
 .. image:: https://img.shields.io/pypi/v/haunts.svg
         :target: https://pypi.python.org/pypi/haunts

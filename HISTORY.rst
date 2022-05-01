@@ -4,7 +4,8 @@ History
 0.2.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixed: ``START_TIME`` default was not used.
+  Closes #4
 
 
 0.2.1 (2022-02-10)

@@ -1,6 +1,7 @@
 import sys
 import string
 import datetime
+import click
 
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -99,7 +100,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
         try:
             calendar = calendars[get_col(row, headers_id["Project"])]
         except KeyError:
-            print(
+            click.echo(
                 f"Cannot find a calendar id associated to project \"{get_col(row, headers_id['Project'])}\""
             )
             sys.exit(1)
@@ -167,7 +168,7 @@ def sync_report(config_dir, month, days=[]):
     try:
         document_id = get("CONTROLLER_SHEET_DOCUMENT_ID")
     except KeyError:
-        print(
+        click.echo(
             "A value for CONTROLLER_SHEET_DOCUMENT_ID is required but "
             "is not specified in your ini file"
         )

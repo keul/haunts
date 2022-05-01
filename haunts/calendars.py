@@ -1,4 +1,7 @@
 import datetime
+import click
+from dateutil import parser
+
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -15,6 +18,10 @@ ORIGIN_TIME = datetime.datetime.strptime(
 # If modifying these scopes, delete the calendars-token file.
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 creds = None
+
+
+def formatDate(date, format):
+    return parser.isoparse(date).strftime(format)
 
 
 def get_credentials(config_dir):
@@ -92,9 +99,20 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
     LOGGER.debug(calendar, date, summary, details, length, event, from_time)
     event = service.events().insert(calendarId=calendar, body=event).execute()
     LOGGER.debug(event.items())
-    print(
-        f'Created event "{summary}" ({f"{duration}h" if duration else "full day"}) on calendar {event["organizer"]["displayName"]}'
-    )
+    if duration:
+        click.echo(
+            f'Created event "{summary}" from {formatDate(event["start"]["dateTime"], "%H:%M")} '
+            f'to {formatDate(event["end"]["dateTime"], "%H:%M")} ({duration}h) '
+            f'in date {formatDate(event["start"]["dateTime"], "%d/%m")} '
+            f'on calendar {event["organizer"]["displayName"]}'
+        )
+    else:
+        click.echo(
+            f'Created event "{summary}" (full day) '
+            f'in date {formatDate(event["start"]["date"], "%d/%m")} '
+            f'on calendar {event["organizer"]["displayName"]}'
+        )
+
     event_data = {
         "id": event["id"],
         "next_slot": end.strftime("%H:%M") if haveLength else from_time,

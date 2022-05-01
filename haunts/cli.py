@@ -14,15 +14,15 @@ from .spreadsheet import sync_report
 config_dir = Path(os.path.expanduser("~/.haunts"))
 
 if not config_dir.is_dir():
-    print(f"Creating config directory at {config_dir.resolve()}")
+    click.echo(f"Creating config directory at {config_dir.resolve()}")
     config_dir.mkdir()
-    print("…created")
+    click.echo("…created")
 
 
 config = Path(os.path.expanduser(f"{config_dir.resolve()}/haunts.ini"))
 if not config.is_file():
     create_default(config)
-    print(f"Manage you settings at {config.resolve()} and try again")
+    click.echo(f"Manage you settings at {config.resolve()} and try again")
     sys.exit(0)
 else:
     init(config)

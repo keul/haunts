@@ -50,7 +50,7 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
     get_credentials(config_dir)
     service = build("calendar", "v3", credentials=creds)
 
-    from_time = from_time or get("START_TIME")
+    from_time = from_time or get("START_TIME", "08:30")
     start = datetime.datetime.strptime(
         f"{date.strftime('%Y-%m-%d')}T{from_time}:00{LOCAL_TIMEZONE}",
         f"%Y-%m-%dT%H:%M:%S%z",

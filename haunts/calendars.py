@@ -1,3 +1,4 @@
+import time
 import datetime
 import click
 from dateutil import parser
@@ -90,15 +91,30 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
             "date": (end + datetime.timedelta(days=1)).isoformat()[:10],
         }
 
-    event = {
+    event_body = {
         "summary": summary,
         "description": details,
         "start": startParams,
         "end": endParams,
     }
 
-    LOGGER.debug(calendar, date, summary, details, length, event, from_time)
-    event = service.events().insert(calendarId=calendar, body=event).execute()
+    def execute_creation():
+        LOGGER.debug(calendar, date, summary, details, length, event_body, from_time)
+        event = service.events().insert(calendarId=calendar, body=event_body).execute()
+        return event
+
+    try:
+        event = execute_creation()
+    except HttpError as err:
+        if err.status_code == 429:
+            click.echo("Too many requests")
+            click.echo(err.error_details)
+            click.echo("haunts will now pause for a while ⏲…")
+            time.sleep(60)
+            click.echo("Retrying…")
+            event = execute_creation()
+        else:
+            raise
     LOGGER.debug(event.items())
     if duration:
         click.echo(

@@ -115,6 +115,7 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
             event = execute_creation()
         else:
             raise
+
     LOGGER.debug(event.items())
     if duration:
         click.echo(
@@ -141,8 +142,11 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
 def delete_event(config_dir, calendar, event_id):
     get_credentials(config_dir)
     service = build("calendar", "v3", credentials=creds)
+    if not event_id:
+        click.echo(f"Missing id. Skipping…")
+        return
     try:
-        event = service.events().delete(calendarId=calendar, eventId=event_id).execute()
+        service.events().delete(calendarId=calendar, eventId=event_id).execute()
     except HttpError as err:
         if err.status_code == 410:
             click.echo(f"Event {event_id} already deleted")

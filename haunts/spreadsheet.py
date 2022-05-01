@@ -1,8 +1,10 @@
 import sys
+import time
 import string
 import datetime
 import click
 
+from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -99,9 +101,10 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             sys.exit(1)
 
         try:
-            if row[headers_id["Action"]] == actions.IGNORE:
+            action = row[headers_id["Action"]]
+            if action == actions.IGNORE:
                 continue
-            if row[headers_id["Action"]] == actions.DELETE:
+            if action == actions.DELETE:
                 delete_event(
                     config_dir=config_dir,
                     calendar=calendar,
@@ -118,7 +121,24 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
                         ],
                     },
                 )
-                request.execute()
+
+                try:
+                    request.execute()
+                except HttpError as err:
+                    if err.status_code == 429:
+                        click.echo("Too many requests")
+                        click.echo(err.error_details)
+                        click.echo("haunts will now pause for a while ⏲…")
+                        time.sleep(60)
+                        click.echo("Retrying…")
+                        request.execute()
+                    else:
+                        raise
+
+                continue
+            if action:
+                # There's something in the action cell, but not recognized
+                click.echo(f"Unknown action {action}. Ignoring…")
                 continue
         except IndexError:
             # We have no data there
@@ -135,32 +155,43 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
         )
         last_to_time = event["next_slot"]
 
-        # Put the action to actions.IGNORE, in this way it will not be processed again
-        request = sheet.values().update(
+        request = sheet.values().batchUpdate(
             spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
-            range=f"{month}!{headers['Action']}{y + 2}",
-            valueInputOption="RAW",
-            body={"values": [[actions.IGNORE]]},
+            body={
+                "valueInputOption": "USER_ENTERED",
+                "data": [
+                    # Put the action to actions.IGNORE, in this way it will not be processed again
+                    {
+                        "range": f"{month}!{headers['Action']}{y + 2}",
+                        "values": [[actions.IGNORE]],
+                    },
+                    # Save the event id, required to interact with the event in future
+                    {
+                        "range": f"{month}!{headers['Event id']}{y + 2}",
+                        "values": [[event["id"]]],
+                    },
+                    # Quick link to the event on the calendar
+                    {
+                        "range": f"{month}!{headers['Link']}{y + 2}",
+                        "values": [[f"=HYPERLINK(\"{event['link']}\";\"open\")"]],
+                    },
+                ],
+            },
         )
-        request.execute()
 
-        # Save the event id, required to interact with the event in future
-        request = sheet.values().update(
-            spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
-            range=f"{month}!{headers['Event id']}{y + 2}",
-            valueInputOption="RAW",
-            body={"values": [[event["id"]]]},
-        )
-        request.execute()
-
-        # Quick link to the event on the calendar
-        request = sheet.values().update(
-            spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
-            range=f"{month}!{headers['Link']}{y + 2}",
-            valueInputOption="USER_ENTERED",
-            body={"values": [[f"=HYPERLINK(\"{event['link']}\";\"open\")"]]},
-        )
-        request.execute()
+        try:
+            request.execute()
+        except HttpError as err:
+            if err.status_code == 429:
+                click.echo("Too many requests")
+                click.echo(err.error_details)
+                click.echo("haunts will now pause for a while ⏲…")
+                time.sleep(60)
+                click.echo("Retrying…")
+                request.execute()
+            else:
+                raise
+    click.echo("Done!")
 
 
 def get_calendars(sheet):

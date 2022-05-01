@@ -151,14 +151,26 @@ For every rows that match, *haunts* will:
   The event will last for ``Spent`` hours
 - The next event will start where the previous ended
 - If the event will be successfully created, an *I* will be placed in the ``Action`` column.
-  This will make other execution of *haunts* to ignore the line.
+  This will make future executions to ignore the line.
 - Other columns will be read or filled as described above.
+
+Actions
+-------
+
+Possible values you can find (or put yourself) in the ``Action`` column:
+
+- ``I``
+  
+  execution will just ignore this line
+- ``D``
+  
+  execution will clear ``Action``, ``Event id`` and ``Link`` cells for this row.
+  So: next execution will likely fill this line again (this is a poor-man-edit)
 
 TODO and known issues
 =====================
 
 * **Rows in the sheet must be sorted ascending**
-* Other actions maybe? Like *E* (for edit)
 * *haunts* will not check for already filled time slots (yet?), so overlapping of events may happens
 
 Why?!

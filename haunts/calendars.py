@@ -2,6 +2,7 @@ import datetime
 import click
 from dateutil import parser
 
+from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -119,3 +120,13 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
         "link": event["htmlLink"],
     }
     return event_data
+
+
+def delete_event(config_dir, calendar, event_id):
+    get_credentials(config_dir)
+    service = build("calendar", "v3", credentials=creds)
+    try:
+        event = service.events().delete(calendarId=calendar, eventId=event_id).execute()
+    except HttpError as err:
+        if err.status_code == 410:
+            click.echo(f"Event {event_id} already deleted")

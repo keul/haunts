@@ -10,7 +10,7 @@ from google.oauth2.credentials import Credentials
 
 from .ini import get
 from . import actions
-from .calendars import create_event, ORIGIN_TIME
+from .calendars import create_event, delete_event, ORIGIN_TIME
 
 # If modifying these scopes, delete the sheets-token file
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -89,13 +89,6 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
         if skip:
             continue
 
-        try:
-            if row[headers_id["Action"]] is not None:
-                continue
-        except IndexError:
-            # We have no data there
-            pass
-
         calendar = None
         try:
             calendar = calendars[get_col(row, headers_id["Project"])]
@@ -104,6 +97,32 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
                 f"Cannot find a calendar id associated to project \"{get_col(row, headers_id['Project'])}\""
             )
             sys.exit(1)
+
+        try:
+            if row[headers_id["Action"]] == actions.IGNORE:
+                continue
+            if row[headers_id["Action"]] == actions.DELETE:
+                delete_event(
+                    config_dir=config_dir,
+                    calendar=calendar,
+                    event_id=get_col(row, headers_id["Event id"]),
+                )
+                click.echo(f'Deleted event "{get_col(row, headers_id["Activity"])}"')
+                request = sheet.values().batchClear(
+                    spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
+                    body={
+                        "ranges": [
+                            f"{month}!{headers['Event id']}{y + 2}",
+                            f"{month}!{headers['Link']}{y + 2}",
+                            f"{month}!{headers['Action']}{y + 2}",
+                        ],
+                    },
+                )
+                request.execute()
+                continue
+        except IndexError:
+            # We have no data there
+            pass
 
         event = create_event(
             config_dir=config_dir,
@@ -116,7 +135,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
         )
         last_to_time = event["next_slot"]
 
-        # Save the event id, required to interact with the event in future
+        # Put the action to actions.IGNORE, in this way it will not be processed again
         request = sheet.values().update(
             spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
             range=f"{month}!{headers['Action']}{y + 2}",

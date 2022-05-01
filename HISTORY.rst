@@ -6,7 +6,7 @@ History
 
 - Fixed: ``START_TIME`` default was not used.
   Closes #4
-
+- New: new action: ``D``
 
 0.2.1 (2022-02-10)
 ------------------

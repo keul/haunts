@@ -81,6 +81,11 @@ Sheet format should be:
   
   The day where the event will be created
 
+**Start time**
+  (time ``HH:MM`` or empty) - _optional_
+  
+  If povided, the current event will start at given time. This will condition also events defined after this row.
+
 **Spent**
   (number or empty)
   

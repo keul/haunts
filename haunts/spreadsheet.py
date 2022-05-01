@@ -77,6 +77,12 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
         current_date = get_col(row, headers_id["Date"])
         date = ORIGIN_TIME + datetime.timedelta(days=current_date)
 
+        default_start_time = (
+            get_col(row, headers_id["Start time"])
+            if headers_id.get("Start time") and get_col(row, headers_id["Start time"])
+            else None
+        )
+
         # In case we changed day, let's restart from START_TIME
         if current_date != last_date:
             last_to_time = None
@@ -151,7 +157,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             summary=get_col(row, headers_id["Activity"]),
             details=get_col(row, headers_id["Details"]),
             length=get_col(row, headers_id["Spent"]),
-            from_time=last_to_time,
+            from_time=default_start_time or last_to_time,
         )
         last_to_time = event["next_slot"]
 

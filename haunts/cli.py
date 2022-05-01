@@ -29,19 +29,22 @@ else:
 
 
 @click.command()
-@click.argument("month")
+@click.argument("sheet")
 @click.option(
     "--day",
     "-d",
     multiple=True,
+    help='day filter in format "YYYY-MM-DD". Can be provided multiple times.',
 )
-def main(month, day=[]):
-    """Console script for haunts."""
+def main(sheet, day=[]):
+    """
+    Sync events from a Google Sheet to your Google Calendar.
+    """
     click.echo("Started calendars synchronization")
     init_calendars(config_dir)
     sync_report(
         config_dir,
-        month,
+        sheet,
         days=[datetime.datetime.strptime(d, "%Y-%m-%d") for d in day],
     )
     return 0

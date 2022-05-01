@@ -1,3 +1,4 @@
+import sys
 import time
 import datetime
 import click
@@ -35,6 +36,12 @@ def get_credentials(config_dir):
     # time.
     token = config_dir / "calendars-token.json"
     credentials = config_dir / "credentials.json"
+    if not credentials.exists():
+        click.echo(
+            f"Missing credentials file at {credentials.resolve()}. "
+            f"Did you created a Google Cloud project and downloaded the credentials file?"
+        )
+        sys.exit(1)
     if token.is_file():
         creds = Credentials.from_authorized_user_file(token.resolve(), SCOPES)
     # If there are no (valid) credentials available, let the user log in.

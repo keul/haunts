@@ -28,12 +28,17 @@ Prerequisites
 
 To use Google Calendar and Google Spreasheet APIs you must generate a Google API application and download a *credentials.json*:
 
-* Run *haunts* for the first time. It will create the ``~/.haunts`` folder.
+* Run ``haunts --config``. It will create the ``~/.haunts`` folder and an ``haunts.ini`` file inside it.
+* Edit the ``haunts.ini`` file by setting the ``CONTROLLER_SHEET_DOCUMENT_ID``
 * Go to https://console.cloud.google.com/home/dashboard and create a Project called *haunts*.
-* In the search bar, search *Credentials APIs and services* and enable it.
-* Click on *Create Credentials*, set *Desktop* as the *type* and save the json file as ``~/.haunts/credentials.json``.
-* In the search bar, search *Google Sheets API* and *Google Calendar API* and activate them.
-* Run ``haunts``, it will ask you to authenticate to both the Google Sheets and the Google Calendar APIs. It will create the following files: ``~/.haunts/calendars-token.json`` and ``~/.haunts/sheets-token.json``
+  
+  * In the search bar, search *Credentials APIs and services* and enable it.
+  * Click on *Create Credentials*, set *Desktop* as the *type* and save the json file as ``~/.haunts/credentials.json``.
+  * In the search bar, search *Google Sheets API* and *Google Calendar API* and activate them.
+  
+* Run ``haunts`` normally.
+  It will ask you to authenticate to both the Google Sheets and the Google Calendar APIs (a browser should be automatically opened for you).
+  This action will create the following files: ``~/.haunts/calendars-token.json`` and ``~/.haunts/sheets-token.json``
 
 How to use
 ==========
@@ -50,12 +55,7 @@ Usage
 
    haunts <SHEET_NAME>
 
-The first time ``haunts`` will be run, it just create an `.haunts` folder in your home directory with configuration files inside, then it exits.
-You *must* edit the ``~/.haunts/haunts.ini`` file.
-
-Following run attempts will work normally.
-
-You can also limits events interaction to a single day, or a set of days by using the ``-d`` parameter (can be used multiple times):
+You can limits events interaction to a single day, or a set of days by using the ``-d`` parameter (can be used multiple times):
 
 .. code-block:: bash
 
@@ -64,17 +64,17 @@ You can also limits events interaction to a single day, or a set of days by usin
 How it works
 ------------
 
-The command will try to access a Google Spreatsheet you must own (write access required), specifically it will read a single sheet inside the spreadsheet.
+The command will try to access a Google Spreatsheet you must own (write access required), specifically it will read a single sheet at time inside the spreadsheet.
 
-Month sheet definition
-----------------------
+Sheet definition
+----------------
 
-The referenced sheet must contains a set of columns (with headers defined below) but orders matters not.
-Also: additional columns can be added and they will be ignored.
+The referenced sheet must contains a set of columns. Headers names are important but orders matters not.
+Any additional columns will be ignored.
 
 The partition in multiple sheets is designed to keep every month in a separate sheet, but this is not strictly checked.
 
-Sheet format should be:
+Every sheet should contains following headers:
 
 **Date**
   (date)
@@ -94,7 +94,7 @@ Sheet format should be:
 **Project**
   (number)
   
-  Project name (see below)
+  Project name as it's named in the *config* sheet (see below)
 
 **Activity**
   (string)
@@ -115,12 +115,11 @@ Sheet format should be:
   (text)
   
   Leave this empty. It will be filled with a link to the event inside Google Calendar.
-  Put an ``I`` manually if you want to ignore an entry and avoid event creation.
 
 **Action**
   (char)
   
-  See below. If emtpy: it will be filled with an ``I`` when an event is created
+  See below. If empty: it will be filled with an ``I`` when an event is created
 
 Configuring projects
 --------------------
@@ -128,7 +127,7 @@ Configuring projects
 The spreadsheet must also contains a *configuration sheet* (default name is ``config``, can be changed in the .ini) where you must put two columns (with headers):
 
 **id**
-  The id of the Google Calendar associated to this project.
+  The id of a Google Calendar associated to this project.
   You must have write access to this calendar.
 
 **name**
@@ -136,7 +135,7 @@ The spreadsheet must also contains a *configuration sheet* (default name is ``co
 
 A project name can be associated to the same calendar id multiple times.
 
-Values in the ``name`` columns are the only valid values for the ``Project`` column introduced above
+Values in the ``name`` column are the only valid values for the ``Project`` column introduced above
 
 How events will be filled
 -------------------------

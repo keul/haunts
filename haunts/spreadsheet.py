@@ -215,11 +215,12 @@ def sync_report(config_dir, month, days=[]):
     """Open a sheet, analyze it and populate calendars with new events"""
     # The ID and range of the controller timesheet
     get_credentials(config_dir)
-
     service = build("sheets", "v4", credentials=creds)
 
     # Call the Sheets API
     sheet = service.spreadsheets()
+
+    click.echo("Started calendars synchronization")
 
     try:
         document_id = get("CONTROLLER_SHEET_DOCUMENT_ID")

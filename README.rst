@@ -82,7 +82,7 @@ Every sheet should contains following headers:
   The day where the event will be created
 
 **Start time**
-  (time ``HH:MM`` or empty) - _optional_
+  (time ``HH:MM`` or empty) - *optional*
   
   If povided, the current event will start at given time. This will condition also events defined after this row.
 

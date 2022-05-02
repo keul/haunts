@@ -12,6 +12,7 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "Click>=7.0",
+    "python-dateutil",
     "google-api-python-client",
     "google-auth-httplib2",
     "google-auth-oauthlib",

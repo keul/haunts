@@ -1,7 +1,10 @@
 import sys
+import time
 import string
 import datetime
+import click
 
+from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -9,7 +12,7 @@ from google.oauth2.credentials import Credentials
 
 from .ini import get
 from . import actions
-from .calendars import create_event, ORIGIN_TIME
+from .calendars import create_event, delete_event, ORIGIN_TIME
 
 # If modifying these scopes, delete the sheets-token file
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -74,6 +77,12 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
         current_date = get_col(row, headers_id["Date"])
         date = ORIGIN_TIME + datetime.timedelta(days=current_date)
 
+        default_start_time = (
+            get_col(row, headers_id["Start time"])
+            if headers_id.get("Start time") and get_col(row, headers_id["Start time"])
+            else None
+        )
+
         # In case we changed day, let's restart from START_TIME
         if current_date != last_date:
             last_to_time = None
@@ -88,21 +97,58 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
         if skip:
             continue
 
-        try:
-            if row[headers_id["Action"]] is not None:
-                continue
-        except IndexError:
-            # We have no data there
-            pass
-
         calendar = None
         try:
             calendar = calendars[get_col(row, headers_id["Project"])]
         except KeyError:
-            print(
+            click.echo(
                 f"Cannot find a calendar id associated to project \"{get_col(row, headers_id['Project'])}\""
             )
             sys.exit(1)
+
+        try:
+            action = row[headers_id["Action"]]
+            if action == actions.IGNORE:
+                continue
+            if action == actions.DELETE:
+                delete_event(
+                    config_dir=config_dir,
+                    calendar=calendar,
+                    event_id=get_col(row, headers_id["Event id"]),
+                )
+                click.echo(f'Deleted event "{get_col(row, headers_id["Activity"])}"')
+                request = sheet.values().batchClear(
+                    spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
+                    body={
+                        "ranges": [
+                            f"{month}!{headers['Event id']}{y + 2}",
+                            f"{month}!{headers['Link']}{y + 2}",
+                            f"{month}!{headers['Action']}{y + 2}",
+                        ],
+                    },
+                )
+
+                try:
+                    request.execute()
+                except HttpError as err:
+                    if err.status_code == 429:
+                        click.echo("Too many requests")
+                        click.echo(err.error_details)
+                        click.echo("haunts will now pause for a while ⏲…")
+                        time.sleep(60)
+                        click.echo("Retrying…")
+                        request.execute()
+                    else:
+                        raise
+
+                continue
+            if action:
+                # There's something in the action cell, but not recognized
+                click.echo(f"Unknown action {action}. Ignoring…")
+                continue
+        except IndexError:
+            # We have no data there
+            pass
 
         event = create_event(
             config_dir=config_dir,
@@ -111,36 +157,47 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             summary=get_col(row, headers_id["Activity"]),
             details=get_col(row, headers_id["Details"]),
             length=get_col(row, headers_id["Spent"]),
-            from_time=last_to_time,
+            from_time=default_start_time or last_to_time,
         )
         last_to_time = event["next_slot"]
 
-        # Save the event id, required to interact with the event in future
-        request = sheet.values().update(
+        request = sheet.values().batchUpdate(
             spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
-            range=f"{month}!{headers['Action']}{y + 2}",
-            valueInputOption="RAW",
-            body={"values": [[actions.IGNORE]]},
+            body={
+                "valueInputOption": "USER_ENTERED",
+                "data": [
+                    # Put the action to actions.IGNORE, in this way it will not be processed again
+                    {
+                        "range": f"{month}!{headers['Action']}{y + 2}",
+                        "values": [[actions.IGNORE]],
+                    },
+                    # Save the event id, required to interact with the event in future
+                    {
+                        "range": f"{month}!{headers['Event id']}{y + 2}",
+                        "values": [[event["id"]]],
+                    },
+                    # Quick link to the event on the calendar
+                    {
+                        "range": f"{month}!{headers['Link']}{y + 2}",
+                        "values": [[f"=HYPERLINK(\"{event['link']}\";\"open\")"]],
+                    },
+                ],
+            },
         )
-        request.execute()
 
-        # Save the event id, required to interact with the event in future
-        request = sheet.values().update(
-            spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
-            range=f"{month}!{headers['Event id']}{y + 2}",
-            valueInputOption="RAW",
-            body={"values": [[event["id"]]]},
-        )
-        request.execute()
-
-        # Quick link to the event on the calendar
-        request = sheet.values().update(
-            spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
-            range=f"{month}!{headers['Link']}{y + 2}",
-            valueInputOption="USER_ENTERED",
-            body={"values": [[f"=HYPERLINK(\"{event['link']}\";\"open\")"]]},
-        )
-        request.execute()
+        try:
+            request.execute()
+        except HttpError as err:
+            if err.status_code == 429:
+                click.echo("Too many requests")
+                click.echo(err.error_details)
+                click.echo("haunts will now pause for a while ⏲…")
+                time.sleep(60)
+                click.echo("Retrying…")
+                request.execute()
+            else:
+                raise
+    click.echo("Done!")
 
 
 def get_calendars(sheet):
@@ -158,16 +215,17 @@ def sync_report(config_dir, month, days=[]):
     """Open a sheet, analyze it and populate calendars with new events"""
     # The ID and range of the controller timesheet
     get_credentials(config_dir)
-
     service = build("sheets", "v4", credentials=creds)
 
     # Call the Sheets API
     sheet = service.spreadsheets()
 
+    click.echo("Started calendars synchronization")
+
     try:
         document_id = get("CONTROLLER_SHEET_DOCUMENT_ID")
     except KeyError:
-        print(
+        click.echo(
             "A value for CONTROLLER_SHEET_DOCUMENT_ID is required but "
             "is not specified in your ini file"
         )

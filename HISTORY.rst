@@ -7,6 +7,13 @@ History
 - Fixed: ``START_TIME`` default was not used.
   Closes #4
 - New: new action: ``D``
+- New: added "Start time" feature.
+  Closes #7
+- Fix: reduces number of writes.
+  Closes #6
+- Fix: do not fail badly when max number of requests per minutes is reached.
+  See #1
+- New: added "--config" for initial env configuration, improved documentation
 
 0.2.1 (2022-02-10)
 ------------------

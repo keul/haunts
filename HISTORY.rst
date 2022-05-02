@@ -1,7 +1,7 @@
 History
 =======
 
-0.2.2 (unreleased)
+0.3.0 (2022-05-02)
 ------------------
 
 - Fixed: ``START_TIME`` default was not used.

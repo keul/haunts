@@ -72,6 +72,9 @@ Sheet definition
 The referenced sheet must contains a set of columns. Headers names are important but orders matters not.
 Any additional columns will be ignored.
 
+An `example sheet
+<https://docs.google.com/spreadsheets/d/18ADhaNhEyr05cyNqXU-o-V4ialrzW9CS3XiFLM-glT4/edit#gid=998726384>`_ is provided.
+
 The partition in multiple sheets is designed to keep every month in a separate sheet, but this is not strictly checked.
 
 Every sheet should contains following headers:
@@ -82,14 +85,14 @@ Every sheet should contains following headers:
   The day where the event will be created
 
 **Start time**
-  (time ``HH:MM`` or empty) - *optional*
+  (time string in format ``HH:MM`` or empty) - *optional column*
   
-  If povided, the current event will start at given time. This will condition also events defined after this row.
+  If provided, the current event will start at given time. This will influence also events defined after this row
 
 **Spent**
   (number or empty)
   
-  How long the event will last. Leave empty to create a full-day event.
+  How long the event will last. Leave empty to create a full-day event
 
 **Project**
   (number)
@@ -114,7 +117,7 @@ Every sheet should contains following headers:
 **Link**
   (text)
   
-  Leave this empty. It will be filled with a link to the event inside Google Calendar.
+  Leave this empty. It will be filled with a link to the event inside Google Calendar
 
 **Action**
   (char)
@@ -122,7 +125,7 @@ Every sheet should contains following headers:
   See below. If empty: it will be filled with an ``I`` when an event is created
 
 Configuring projects
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 The spreadsheet must also contains a *configuration sheet* (default name is ``config``, can be changed in the .ini) where you must put two columns (with headers):
 

@@ -11,6 +11,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
+    "setuptools",
     "Click>=7.0",
     "python-dateutil",
     "google-api-python-client",

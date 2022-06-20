@@ -4,7 +4,7 @@ History
 0.3.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- bugfix: If a row uses an ``I`` action, project can be invalid
 
 
 0.3.0 (2022-05-02)

@@ -98,6 +98,17 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             continue
 
         calendar = None
+        action = None
+
+        try:
+            action = row[headers_id["Action"]]
+        except IndexError:
+            # We have no action defined
+            pass
+
+        if action == actions.IGNORE:
+            continue
+
         try:
             calendar = calendars[get_col(row, headers_id["Project"])]
         except KeyError:
@@ -106,49 +117,43 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             )
             sys.exit(1)
 
-        try:
-            action = row[headers_id["Action"]]
-            if action == actions.IGNORE:
-                continue
-            if action == actions.DELETE:
-                delete_event(
-                    config_dir=config_dir,
-                    calendar=calendar,
-                    event_id=get_col(row, headers_id["Event id"]),
-                )
-                click.echo(f'Deleted event "{get_col(row, headers_id["Activity"])}"')
-                request = sheet.values().batchClear(
-                    spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
-                    body={
-                        "ranges": [
-                            f"{month}!{headers['Event id']}{y + 2}",
-                            f"{month}!{headers['Link']}{y + 2}",
-                            f"{month}!{headers['Action']}{y + 2}",
-                        ],
-                    },
-                )
+        if action == actions.DELETE:
+            delete_event(
+                config_dir=config_dir,
+                calendar=calendar,
+                event_id=get_col(row, headers_id["Event id"]),
+            )
+            click.echo(f'Deleted event "{get_col(row, headers_id["Activity"])}"')
+            request = sheet.values().batchClear(
+                spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
+                body={
+                    "ranges": [
+                        f"{month}!{headers['Event id']}{y + 2}",
+                        f"{month}!{headers['Link']}{y + 2}",
+                        f"{month}!{headers['Action']}{y + 2}",
+                    ],
+                },
+            )
 
-                try:
+            try:
+                request.execute()
+            except HttpError as err:
+                if err.status_code == 429:
+                    click.echo("Too many requests")
+                    click.echo(err.error_details)
+                    click.echo("haunts will now pause for a while ⏲…")
+                    time.sleep(60)
+                    click.echo("Retrying…")
                     request.execute()
-                except HttpError as err:
-                    if err.status_code == 429:
-                        click.echo("Too many requests")
-                        click.echo(err.error_details)
-                        click.echo("haunts will now pause for a while ⏲…")
-                        time.sleep(60)
-                        click.echo("Retrying…")
-                        request.execute()
-                    else:
-                        raise
+                else:
+                    raise
 
-                continue
-            if action:
-                # There's something in the action cell, but not recognized
-                click.echo(f"Unknown action {action}. Ignoring…")
-                continue
-        except IndexError:
-            # We have no data there
-            pass
+            continue
+
+        if action:
+            # There's something in the action cell, but not recognized
+            click.echo(f"Unknown action {action}. Ignoring…")
+            continue
 
         event = create_event(
             config_dir=config_dir,

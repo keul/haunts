@@ -74,6 +74,16 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
     last_date = None
 
     for y, row in enumerate(data["values"]):
+        action = ""
+        try:
+            action = row[headers_id["Action"]]
+        except IndexError:
+            # We have no action defined
+            pass
+
+        if action == actions.IGNORE:
+            continue
+
         current_date = get_col(row, headers_id["Date"])
         date = ORIGIN_TIME + datetime.timedelta(days=current_date)
 
@@ -99,15 +109,6 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
 
         calendar = None
         action = None
-
-        try:
-            action = row[headers_id["Action"]]
-        except IndexError:
-            # We have no action defined
-            pass
-
-        if action == actions.IGNORE:
-            continue
 
         try:
             calendar = calendars[get_col(row, headers_id["Project"])]

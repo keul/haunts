@@ -189,7 +189,7 @@ In `B-Open
 OK, but why "haunts"?!
 ----------------------
 
-An haunt is a monster from `Dungeond&Dragons
+An haunt is a monster from `Dungeons&Dragons
 <https://dungeonsdragons.fandom.com/wiki/Haunt>`_, which was translated to italian as "Presenza".
 
 But "presenza" is the same term used in italian for "participation", so how we call our worklogs.

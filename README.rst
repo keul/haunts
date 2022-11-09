@@ -5,7 +5,7 @@ B-Open Haunts
 .. image:: https://img.shields.io/pypi/v/haunts.svg
         :target: https://pypi.python.org/pypi/haunts
 
-.. image:: https://raw.githubusercontent.com/keul/haunts/main/docs/haunt.gif
+.. image:: https://raw.githubusercontent.com/keul/haunts/main/docs/fear-of-the-worklog.jpg
         :target: https://dungeonsdragons.fandom.com/wiki/Haunt
         :alt: Haunt monster
 

@@ -95,7 +95,7 @@ Every sheet should contains following headers:
   How long the event will last. Leave empty to create a full-day event
 
 **Project**
-  (number)
+  (string)
   
   Project name as it's named in the *config* sheet (see below)
 

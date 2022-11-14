@@ -157,7 +157,7 @@ For every rows that match, *haunts* will:
 - Generate a new event, starting from a default time (this can be configured in the .ini).
   The event will last for ``Spent`` hours
 - The next event will start where the previous ended
-- If the event will be successfully created, an `I` will be placed in the ``Action`` column.
+- If the event will be successfully created, an "I" will be placed in the ``Action`` column.
   This will make future executions to ignore the line.
 - Other columns will be read or filled as described above.
 

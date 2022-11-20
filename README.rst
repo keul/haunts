@@ -198,7 +198,7 @@ But "presenza" is the same term used in italian for "participation", so how we c
 
 And filling worklogs haunt us.
 
-.. image:: https://raw.githubusercontent.com/keul/haunts/main/docs/pc.gif
+.. image:: https://raw.githubusercontent.com/keul/haunts/main/docs/pm.gif
 
 Credits
 =======

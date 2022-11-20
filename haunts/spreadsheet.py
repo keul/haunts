@@ -3,7 +3,7 @@ import string
 import sys
 import time
 import click
-from colorama import Back, Style
+from colorama import Back, Fore, Style
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -73,6 +73,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
     headers_id = get_headers(sheet, month, indexes=True)
     last_to_time = None
     last_date = None
+    warn_lines = []
 
     for y, row in enumerate(data["values"]):
         action = ""
@@ -117,9 +118,13 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             calendar = calendars[get_col(row, headers_id["Project"])]
         except KeyError:
             click.echo(
-                f"Cannot find a calendar id associated to project \"{get_col(row, headers_id['Project'])}\""
+                Back.YELLOW
+                + Fore.BLACK
+                + f"Cannot find a calendar id associated to project \"{get_col(row, headers_id['Project'])}\" at line {y+1}"
+                + Style.RESET_ALL
             )
-            sys.exit(1)
+            warn_lines.append(y)
+            continue
 
         if action == actions.DELETE:
             delete_event(
@@ -156,7 +161,13 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
 
         if action:
             # There's something in the action cell, but not recognized
-            click.echo(f"Unknown action {action}. Ignoring…")
+            click.echo(
+                Back.YELLOW
+                + Fore.BLACK
+                + f'Unknown action "{action}" at line {y + 1}. Ignoring…'
+                + Style.RESET_ALL
+            )
+            warn_lines.append(y)
             continue
 
         event = create_event(
@@ -207,6 +218,15 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             else:
                 raise
     click.echo("Done!")
+
+    if warn_lines:
+        click.echo("")
+        click.echo(
+            Back.YELLOW
+            + Fore.BLACK
+            + f"⚠️ ⚠️ ⚠️ - There are {len(warn_lines)} lines with warnings. Please check them. ⚠️ ⚠️ ⚠️ "
+            + Style.RESET_ALL
+        )
 
 
 def get_calendars(sheet):

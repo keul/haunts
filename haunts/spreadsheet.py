@@ -1,20 +1,19 @@
+import datetime
+import string
 import sys
 import time
-import string
-import datetime
 import click
-
-from googleapiclient.errors import HttpError
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
+from colorama import Back, Style
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
-from colorama import Back, Style
-
-from .ini import get
+from . import LOGGER
 from . import actions
-from .calendars import create_event, delete_event, ORIGIN_TIME
+from .calendars import ORIGIN_TIME, create_event, delete_event
+from .ini import get
 
 # If modifying these scopes, delete the sheets-token file
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -87,6 +86,9 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             continue
 
         current_date = get_col(row, headers_id["Date"])
+        if not current_date:
+            LOGGER.debug("No date found, skipping")
+            continue
         date = ORIGIN_TIME + datetime.timedelta(days=current_date)
 
         default_start_time = (

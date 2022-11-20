@@ -179,7 +179,7 @@ Possible values you can find (or put yourself) in the ``Action`` column:
 TODO and known issues
 =====================
 
-* **Rows in the sheet must be sorted ascending**
+* Rows in the sheet must be sorted ascending
 * *haunts* will not check for already filled time slots (yet?), so overlapping of events may happens
 
 Why?!
@@ -192,7 +192,7 @@ OK, but why "haunts"?!
 ----------------------
 
 An haunt is a monster from `Dungeons&Dragons
-<https://dungeonsdragons.fandom.com/wiki/Haunt>`_, which was translated to italian as "Presenza".
+<https://dungeonsdragons.fandom.com/wiki/Haunt>`_, which is translated in the italian version of the game as "Presenza".
 
 But "presenza" is the same term used in italian for "participation", so how we call our worklogs.
 

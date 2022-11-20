@@ -2,12 +2,14 @@
 B-Open Haunts
 =============
 
-.. image:: https://img.shields.io/pypi/v/haunts.svg
-        :target: https://pypi.python.org/pypi/haunts
-
 .. image:: https://raw.githubusercontent.com/keul/haunts/main/docs/fear-of-the-worklog.jpg
         :target: https://dungeonsdragons.fandom.com/wiki/Haunt
         :alt: Haunt monster
+
+\  
+
+.. image:: https://img.shields.io/pypi/v/haunts.svg
+        :target: https://pypi.python.org/pypi/haunts
 
 .. contents:: Table of Contents
 
@@ -196,9 +198,12 @@ But "presenza" is the same term used in italian for "participation", so how we c
 
 And filling worklogs haunt us.
 
+.. image:: https://raw.githubusercontent.com/keul/haunts/main/docs/pc.gif
+
 Credits
 =======
 
-Developer and contributors.
+Developers and contributors.
 
 * keul <l.fabbri@bopen.eu> (main worklogs hater)
+* francesconazzaro (how-to-use-google-api-evangelist)

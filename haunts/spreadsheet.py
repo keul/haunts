@@ -1,18 +1,19 @@
+import datetime
+import string
 import sys
 import time
-import string
-import datetime
 import click
-
-from googleapiclient.errors import HttpError
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
+from colorama import Back, Fore, Style
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
-from .ini import get
+from . import LOGGER
 from . import actions
-from .calendars import create_event, delete_event, ORIGIN_TIME
+from .calendars import ORIGIN_TIME, create_event, delete_event
+from .ini import get
 
 # If modifying these scopes, delete the sheets-token file
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -72,6 +73,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
     headers_id = get_headers(sheet, month, indexes=True)
     last_to_time = None
     last_date = None
+    warn_lines = []
 
     for y, row in enumerate(data["values"]):
         action = ""
@@ -85,6 +87,9 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             continue
 
         current_date = get_col(row, headers_id["Date"])
+        if not current_date:
+            LOGGER.debug("No date found, skipping")
+            continue
         date = ORIGIN_TIME + datetime.timedelta(days=current_date)
 
         default_start_time = (
@@ -108,15 +113,18 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             continue
 
         calendar = None
-        action = None
 
         try:
             calendar = calendars[get_col(row, headers_id["Project"])]
         except KeyError:
             click.echo(
-                f"Cannot find a calendar id associated to project \"{get_col(row, headers_id['Project'])}\""
+                Back.YELLOW
+                + Fore.BLACK
+                + f"Cannot find a calendar id associated to project \"{get_col(row, headers_id['Project'])}\" at line {y+1}"
+                + Style.RESET_ALL
             )
-            sys.exit(1)
+            warn_lines.append(y)
+            continue
 
         if action == actions.DELETE:
             delete_event(
@@ -153,7 +161,13 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
 
         if action:
             # There's something in the action cell, but not recognized
-            click.echo(f"Unknown action {action}. Ignoring…")
+            click.echo(
+                Back.YELLOW
+                + Fore.BLACK
+                + f'Unknown action "{action}" at line {y + 1}. Ignoring…'
+                + Style.RESET_ALL
+            )
+            warn_lines.append(y)
             continue
 
         event = create_event(
@@ -205,6 +219,15 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
                 raise
     click.echo("Done!")
 
+    if warn_lines:
+        click.echo("")
+        click.echo(
+            Back.YELLOW
+            + Fore.BLACK
+            + f"⚠️ ⚠️ ⚠️ - There are {len(warn_lines)} lines with warnings. Please check them. ⚠️ ⚠️ ⚠️ "
+            + Style.RESET_ALL
+        )
+
 
 def get_calendars(sheet):
     RANGE = f"{get('CONTROLLER_SHEET_NAME', 'config')}!A2:B"
@@ -237,15 +260,22 @@ def sync_report(config_dir, month, days=[]):
         )
         sys.exit(1)
 
-    data = (
-        sheet.values()
-        .get(
-            spreadsheetId=document_id,
-            range=f"{month}!A2:ZZ",
-            valueRenderOption="UNFORMATTED_VALUE",
+    try:
+        data = (
+            sheet.values()
+            .get(
+                spreadsheetId=document_id,
+                range=f"{month}!A2:ZZ",
+                valueRenderOption="UNFORMATTED_VALUE",
+            )
+            .execute()
         )
-        .execute()
-    )
+    except HttpError as err:
+        click.echo(
+            Back.RED + f'Sheet "{month}" not found or not accessible.' + Style.RESET_ALL
+        )
+        click.echo(err.error_details)
+        sys.exit(1)
 
     calendars = get_calendars(sheet)
     sync_events(config_dir, sheet, data, calendars, days=days, month=month)

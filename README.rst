@@ -2,12 +2,14 @@
 B-Open Haunts
 =============
 
-.. image:: https://img.shields.io/pypi/v/haunts.svg
-        :target: https://pypi.python.org/pypi/haunts
-
 .. image:: https://raw.githubusercontent.com/keul/haunts/main/docs/fear-of-the-worklog.jpg
         :target: https://dungeonsdragons.fandom.com/wiki/Haunt
         :alt: Haunt monster
+
+\  
+
+.. image:: https://img.shields.io/pypi/v/haunts.svg
+        :target: https://pypi.python.org/pypi/haunts
 
 .. contents:: Table of Contents
 
@@ -168,16 +170,16 @@ Possible values you can find (or put yourself) in the ``Action`` column:
 
 - ``I``
   
-  _Ignore_: execution will just ignore this line
+  *Ignore*: execution will just ignore this line
 - ``D``
   
-  _delete_: execution will clear ``Action``, ``Event id`` and ``Link`` cells for this row, and delete the related calendar event.
+  *Delete*: execution will clear ``Action``, ``Event id`` and ``Link`` cells for this row, and delete the related calendar event.
   So: next execution will likely fill this line again (this is a poor-man-edit)
 
 TODO and known issues
 =====================
 
-* **Rows in the sheet must be sorted ascending**
+* Rows in the sheet must be sorted ascending
 * *haunts* will not check for already filled time slots (yet?), so overlapping of events may happens
 
 Why?!
@@ -190,15 +192,18 @@ OK, but why "haunts"?!
 ----------------------
 
 An haunt is a monster from `Dungeons&Dragons
-<https://dungeonsdragons.fandom.com/wiki/Haunt>`_, which was translated to italian as "Presenza".
+<https://dungeonsdragons.fandom.com/wiki/Haunt>`_, which is translated in the italian version of the game as "Presenza".
 
 But "presenza" is the same term used in italian for "participation", so how we call our worklogs.
 
 And filling worklogs haunt us.
 
+.. image:: https://raw.githubusercontent.com/keul/haunts/main/docs/pc.gif
+
 Credits
 =======
 
-Developer and contributors.
+Developers and contributors.
 
 * keul <l.fabbri@bopen.eu> (main worklogs hater)
+* francesconazzaro (how-to-use-google-api-evangelist)

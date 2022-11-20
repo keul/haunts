@@ -5,7 +5,12 @@ History
 ------------------
 
 - bugfix: if a row uses an ``I`` action, everything there is ignored
-
+- When a project is not found: do not stop haunts but skip the line and report that when execution ends.
+  Closes #14
+- Empty lines now supported.
+  Closes #12
+- Human readable error message when the sheet is not found.
+  Closes #11
 
 0.3.0 (2022-05-02)
 ------------------

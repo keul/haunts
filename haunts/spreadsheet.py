@@ -10,6 +10,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
+from colorama import Back, Style
+
 from .ini import get
 from . import actions
 from .calendars import create_event, delete_event, ORIGIN_TIME
@@ -237,15 +239,22 @@ def sync_report(config_dir, month, days=[]):
         )
         sys.exit(1)
 
-    data = (
-        sheet.values()
-        .get(
-            spreadsheetId=document_id,
-            range=f"{month}!A2:ZZ",
-            valueRenderOption="UNFORMATTED_VALUE",
+    try:
+        data = (
+            sheet.values()
+            .get(
+                spreadsheetId=document_id,
+                range=f"{month}!A2:ZZ",
+                valueRenderOption="UNFORMATTED_VALUE",
+            )
+            .execute()
         )
-        .execute()
-    )
+    except HttpError as err:
+        click.echo(
+            Back.RED + f'Sheet "{month}" not found or not accessible.' + Style.RESET_ALL
+        )
+        click.echo(err.error_details)
+        sys.exit(1)
 
     calendars = get_calendars(sheet)
     sync_events(config_dir, sheet, data, calendars, days=days, month=month)

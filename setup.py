@@ -13,6 +13,7 @@ with open("HISTORY.rst") as history_file:
 requirements = [
     "setuptools",
     "Click>=7.0",
+    "colorama",
     "python-dateutil",
     "google-api-python-client",
     "google-auth-httplib2",

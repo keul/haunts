@@ -110,7 +110,6 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             continue
 
         calendar = None
-        action = None
 
         try:
             calendar = calendars[get_col(row, headers_id["Project"])]

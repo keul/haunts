@@ -170,10 +170,10 @@ Possible values you can find (or put yourself) in the ``Action`` column:
 
 - ``I``
   
-  _Ignore_: execution will just ignore this line
+  *Ignore*: execution will just ignore this line
 - ``D``
   
-  _delete_: execution will clear ``Action``, ``Event id`` and ``Link`` cells for this row, and delete the related calendar event.
+  *Delete*: execution will clear ``Action``, ``Event id`` and ``Link`` cells for this row, and delete the related calendar event.
   So: next execution will likely fill this line again (this is a poor-man-edit)
 
 TODO and known issues

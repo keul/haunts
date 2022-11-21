@@ -1,7 +1,7 @@
 History
 =======
 
-0.3.1 (unreleased)
+0.3.1 (2022-11-21)
 ------------------
 
 - bugfix: if a row uses an ``I`` action, everything there is ignored

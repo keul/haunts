@@ -3,11 +3,10 @@ import datetime
 import os
 import sys
 from pathlib import Path
-
+from importlib.metadata import version
 import click
 
 from .ini import create_default, init
-
 from .calendars import init as init_calendars
 from .spreadsheet import sync_report
 from .report import report
@@ -34,7 +33,7 @@ from .report import report
     "--action",
     "-a",
     type=click.Choice(["sync", "report"], case_sensitive=False),
-    help="select which action to execute. Possible values are: report, sync. Default is sync.",
+    help="select which action to execute.",
     show_default=True,
     default="sync",
 )
@@ -45,10 +44,28 @@ from .report import report
     help="project filter. Used only with --action=report to limit it to specific projects. Can be provided multiple times.",
     default=[],
 )
-def main(sheet=None, day=[], run_configuration=False, action="sync", project=[]):
+@click.option(
+    "--version",
+    "-v",
+    "show_version",
+    help="show version and exit.",
+    is_flag=True,
+)
+def main(
+    sheet=None,
+    day=[],
+    run_configuration=False,
+    action="sync",
+    project=[],
+    show_version=False,
+):
     """
     Sync events from a Google Sheet to your Google Calendar.
     """
+
+    if show_version:
+        click.echo(version("haunts"))
+        sys.exit(0)
 
     # config phase
     config_dir = Path(os.path.expanduser("~/.haunts"))

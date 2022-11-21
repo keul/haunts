@@ -19,6 +19,7 @@ requirements = [
     "google-auth-httplib2",
     "google-auth-oauthlib",
     "google-auth<2dev",
+    "tabulate",
 ]
 
 test_requirements = []
@@ -26,16 +27,16 @@ test_requirements = []
 setup(
     author="Luca Fabbri",
     author_email="l.fabbri@bopen.eu",
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: End Users/Desktop",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     description="Fill and sync Google Calendars with events taken from a Google spreadsheet",
     entry_points={
@@ -52,7 +53,7 @@ setup(
     packages=find_packages(include=["haunts", "haunts.*"]),
     test_suite="tests",
     tests_require=test_requirements,
-    url="https://github.com/bopen/haunts",
+    url="https://github.com/keul/haunts",
     version="0.3.1.dev0",
     zip_safe=False,
 )

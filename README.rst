@@ -205,5 +205,5 @@ Credits
 
 Developers and contributors.
 
-* keul <l.fabbri@bopen.eu> (main worklogs hater)
+* keul (main-worklogs-hater)
 * francesconazzaro (how-to-use-google-api-evangelist)

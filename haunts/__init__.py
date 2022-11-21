@@ -4,7 +4,6 @@ from colorama import init
 
 __author__ = """Luca Fabbri"""
 __email__ = "l.fabbri@bopen.eu"
-__version__ = "0.1.0"
 
 
 LOGGER = logging.getLogger("haunts")

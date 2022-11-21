@@ -10,6 +10,7 @@ from .ini import create_default, init
 
 from .calendars import init as init_calendars
 from .spreadsheet import sync_report
+from .report import report
 
 
 @click.command()
@@ -29,7 +30,22 @@ from .spreadsheet import sync_report
     show_default=True,
     default=False,
 )
-def main(sheet=None, day=[], run_configuration=False):
+@click.option(
+    "--action",
+    "-a",
+    type=click.Choice(["sync", "report"], case_sensitive=False),
+    help="select which action to execute. Possible values are: report, sync. Default is sync.",
+    show_default=True,
+    default="sync",
+)
+@click.option(
+    "--project",
+    "-p",
+    multiple=True,
+    help="project filter. Used only with --action=report to limit it to specific projects. Can be provided multiple times.",
+    default=[],
+)
+def main(sheet=None, day=[], run_configuration=False, action="sync", project=[]):
     """
     Sync events from a Google Sheet to your Google Calendar.
     """
@@ -71,11 +87,18 @@ def main(sheet=None, day=[], run_configuration=False):
         sys.exit(0)
 
     init_calendars(config_dir)
-    sync_report(
-        config_dir,
-        sheet,
-        days=[datetime.datetime.strptime(d, "%Y-%m-%d") for d in day],
-    )
+    if action == "sync":
+        sync_report(
+            config_dir,
+            sheet,
+            days=[datetime.datetime.strptime(d, "%Y-%m-%d") for d in day],
+        )
+    elif action == "report":
+        report(
+            config_dir,
+            sheet,
+            project=project,
+        )
     return 0
 
 

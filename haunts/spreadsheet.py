@@ -4,20 +4,17 @@ import sys
 import time
 import click
 from colorama import Back, Fore, Style
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from . import LOGGER
 from . import actions
+from .credentials import get_credentials
 from .calendars import ORIGIN_TIME, create_event, delete_event
 from .ini import get
 
 # If modifying these scopes, delete the sheets-token file
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-creds = None
 
 
 def get_col(row, index):
@@ -25,31 +22,6 @@ def get_col(row, index):
         return row[index]
     except IndexError:
         return None
-
-
-def get_credentials(config_dir):
-    global creds
-    if creds is not None:
-        return
-    # The token stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    token = config_dir / "sheets-token.json"
-    credentials = config_dir / "credentials.json"
-    if token.is_file():
-        creds = Credentials.from_authorized_user_file(token.resolve(), SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                credentials.resolve(), SCOPES
-            )
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open(token.resolve(), "w") as token_file:
-            token_file.write(creds.to_json())
 
 
 def get_headers(sheet, month, indexes=False):
@@ -120,7 +92,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             click.echo(
                 Back.YELLOW
                 + Fore.BLACK
-                + f"Cannot find a calendar id associated to project \"{get_col(row, headers_id['Project'])}\" at line {y+1}"
+                + f"Cannot find a calendar id associated to project \"{get_col(row, headers_id['Project'])}\" at line {y+2}"
                 + Style.RESET_ALL
             )
             warn_lines.append(y)
@@ -164,7 +136,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             click.echo(
                 Back.YELLOW
                 + Fore.BLACK
-                + f'Unknown action "{action}" at line {y + 1}. Ignoring…'
+                + f'Unknown action "{action}" at line {y + 2}. Ignoring…'
                 + Style.RESET_ALL
             )
             warn_lines.append(y)
@@ -243,7 +215,7 @@ def get_calendars(sheet):
 def sync_report(config_dir, month, days=[]):
     """Open a sheet, analyze it and populate calendars with new events"""
     # The ID and range of the controller timesheet
-    get_credentials(config_dir)
+    creds = get_credentials(config_dir, SCOPES, "sheets-token.json")
     service = build("sheets", "v4", credentials=creds)
 
     # Call the Sheets API

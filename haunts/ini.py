@@ -11,6 +11,9 @@ CONTROLLER_SHEET_DOCUMENT_ID=<Google Sheet Document Id here>
 # Events in the day start time in HH:MM format
 # Default is 09:00
 # START_TIME=09:00
+# Overtime start date in HH:MM format
+# Default is 20:00
+# OVERTIME_FROM=20:00
 """
 
 parser = configparser.RawConfigParser(allow_no_value=True)

@@ -31,7 +31,7 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
     creds = get_credentials(config_dir, SCOPES, "calendars-token.json")
     service = build("calendar", "v3", credentials=creds)
 
-    from_time = from_time or get("START_TIME", "08:30")
+    from_time = from_time or get("START_TIME", "09:00")
     start = datetime.datetime.strptime(
         f"{date.strftime('%Y-%m-%d')}T{from_time}:00{LOCAL_TIMEZONE}",
         f"%Y-%m-%dT%H:%M:%S%z",

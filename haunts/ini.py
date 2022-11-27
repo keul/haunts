@@ -9,8 +9,8 @@ CONTROLLER_SHEET_DOCUMENT_ID=<Google Sheet Document Id here>
 # Default is "config"
 # CONTROLLER_SHEET_NAME=config
 # Events in the day start time in HH:MM format
-# Default is 08:30
-# START_TIME=08:30
+# Default is 09:00
+# START_TIME=09:00
 """
 
 parser = configparser.RawConfigParser(allow_no_value=True)

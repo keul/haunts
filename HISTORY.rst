@@ -1,11 +1,12 @@
 History
 =======
 
-0.3.2 (unreleased)
+0.4.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Added ``-p`` parameter, to just act on specific project(s)
+- Added ``--action``, and implemented ``report`` action (credits to @gcammarota)
+- More detailed logging when deleting events with action ``D``
 
 0.3.1 (2022-11-21)
 ------------------
@@ -36,7 +37,6 @@ History
 ------------------
 
 - Fixed full day criteria
-
 
 0.2.0 (2021-07-29)
 ------------------

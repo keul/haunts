@@ -1,7 +1,7 @@
 History
 =======
 
-0.4.0 (unreleased)
+0.4.0 (2022-12-01)
 ------------------
 
 - Added ``-p`` parameter, to just act on specific project(s)

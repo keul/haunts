@@ -4,6 +4,13 @@ History
 0.4.0 (unreleased)
 ------------------
 
+- Added ``-p`` parameter, to just act on specific project(s)
+- Added ``--action``, and implemented ``report`` action (credits to @gcammarota)
+- More detailed logging when deleting events with action ``D``
+
+0.3.1 (2022-11-21)
+------------------
+
 - bugfix: if a row uses an ``I`` action, everything there is ignored
 - When a project is not found: do not stop haunts but skip the line and report that when execution ends.
   Closes #14
@@ -11,9 +18,6 @@ History
   Closes #12
 - Human readable error message when the sheet is not found.
   Closes #11
-- Added ``-p`` parameter, to just act on specific project(s)
-- Added ``--action``, and implemented ``report`` action (credits to @gcammarota)
-- More detailed logging when deleting events with action ``D``
 
 0.3.0 (2022-05-02)
 ------------------

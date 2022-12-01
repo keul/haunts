@@ -57,16 +57,32 @@ Usage
 
    haunts <SHEET_NAME>
 
-You can limits events interaction to a single day, or a set of days by using the ``-d`` parameter (can be used multiple times):
+…or…
+
+.. code-block:: bash
+
+   haunts -a <ACTION> <SHEET_NAME>
+
+You can limit events interaction to a single day, or a set of days by using the ``-d`` parameter (can be used multiple times):
 
 .. code-block:: bash
 
    haunts --day=2021-07-08 <SHEET_NAME>
 
+You can limit events interaction to a single calendar, or a set of calendars by using the ``-p`` parameter (can be used multiple times):
+
+.. code-block:: bash
+
+   haunts --project=Foo <SHEET_NAME>
+
 How it works
 ------------
 
-The command will try to access a Google Spreatsheet you must own (write access required), specifically it will read a single sheet at time inside the spreadsheet.
+What haunts does depends on the ``--action`` parameter.
+
+In its default configuration (if ``--action`` is omitted, or equal to ``sync``), the command will try to access a Google Spreatsheet you must own (write access required), specifically it will read a single sheet at time inside the spreadsheet.
+
+Alternatively you can use the ``report`` value. In this case it just access the Google Spreadsheet to collect data on its content.
 
 Sheet definition
 ----------------
@@ -176,6 +192,35 @@ Possible values you can find (or put yourself) in the ``Action`` column:
   *Delete*: execution will clear ``Action``, ``Event id`` and ``Link`` cells for this row, and delete the related calendar event.
   So: next execution will likely fill this line again (this is a poor-man-edit)
 
+Reporting feature
+-----------------
+
+Using ``haunts -a report <SHEET_NAME>`` will read the source Spreadsheet to collect statistical data.
+
+Both ``-p`` and ``-d`` parameters are allowed.
+
+The resulting table can be something like the following:
+
+.. code-block:: none
+
+   Date        Project      Total
+   ----------  ---------  -------
+   2022-11-20  Calendar1        2
+   2022-11-20  Calendar2        1
+   2022-11-21  Calendar2        5
+   2022-11-21  Calendar3        3
+   2022-11-23  Calendar1       10
+   2022-11-24  Calendar1        8
+   2022-11-26  Calendar4        9
+   2022-11-27  Calendar4        8
+   2022-11-27  Calendar5        1
+   ----------  ---------  -------
+                               47
+
+For every calendar and day found in the sheet, it report a total of hours spent.
+
+Full day events are taken into account, and the overwork is also supported by configuring both ``OVERTIME_FROM`` and ``WORKING_HOURS`` (default is 8).
+
 TODO and known issues
 =====================
 
@@ -207,3 +252,5 @@ Developers and contributors.
 
 * keul (main-worklogs-hater)
 * francesconazzaro (how-to-use-google-api-evangelist)
+* gcammarota (reporting-tool-guy)
+

@@ -10,10 +10,10 @@ from googleapiclient.errors import HttpError
 from . import LOGGER
 from . import actions
 from .credentials import get_credentials
-from .calendars import ORIGIN_TIME, create_event, delete_event
+from .calendars import ORIGIN_TIME, create_event, delete_event, formatDate
 from .ini import get
 
-# If modifying these scopes, delete the sheets-token file
+# If scopes are modified, delete the sheets-token file
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
@@ -37,10 +37,8 @@ def get_headers(sheet, month, indexes=False):
     return {k: string.ascii_lowercase.upper()[values.index(k)] for k in values}
 
 
-def sync_events(config_dir, sheet, data, calendars, days, month):
-    """Enumerate every data in the sheet.
-    Create an event when action column is empty
-    """
+def sync_events(config_dir, sheet, data, calendars, days, month, projects=[]):
+    """Create an event when action column is empty."""
     headers = get_headers(sheet, month)
     headers_id = get_headers(sheet, month, indexes=True)
     last_to_time = None
@@ -55,6 +53,8 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
             # We have no action defined
             pass
 
+        project = get_col(row, headers_id["Project"])
+
         if action == actions.IGNORE:
             continue
 
@@ -62,8 +62,11 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
         if not current_date:
             LOGGER.debug("No date found, skipping")
             continue
-        date = ORIGIN_TIME + datetime.timedelta(days=current_date)
 
+        if projects and project not in projects:
+            continue
+
+        date = ORIGIN_TIME + datetime.timedelta(days=current_date)
         default_start_time = (
             get_col(row, headers_id["Start time"])
             if headers_id.get("Start time") and get_col(row, headers_id["Start time"])
@@ -87,7 +90,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
         calendar = None
 
         try:
-            calendar = calendars[get_col(row, headers_id["Project"])]
+            calendar = calendars[project]
         except KeyError:
             click.echo(
                 Back.YELLOW
@@ -104,7 +107,9 @@ def sync_events(config_dir, sheet, data, calendars, days, month):
                 calendar=calendar,
                 event_id=get_col(row, headers_id["Event id"]),
             )
-            click.echo(f'Deleted event "{get_col(row, headers_id["Activity"])}"')
+            click.echo(
+                f'Deleted event "{get_col(row, headers_id["Activity"])}" in date {date.strftime("%d/%m")} from calendar {project}'
+            )
             request = sheet.values().batchClear(
                 spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
                 body={
@@ -212,8 +217,8 @@ def get_calendars(sheet):
     return {alias: id for [id, alias] in values}
 
 
-def sync_report(config_dir, month, days=[]):
-    """Open a sheet, analyze it and populate calendars with new events"""
+def sync_report(config_dir, month, days=[], projects=[]):
+    """Open a sheet, analyze it and populate calendars with new events."""
     # The ID and range of the controller timesheet
     creds = get_credentials(config_dir, SCOPES, "sheets-token.json")
     service = build("sheets", "v4", credentials=creds)
@@ -250,4 +255,6 @@ def sync_report(config_dir, month, days=[]):
         sys.exit(1)
 
     calendars = get_calendars(sheet)
-    sync_events(config_dir, sheet, data, calendars, days=days, month=month)
+    sync_events(
+        config_dir, sheet, data, calendars, days=days, month=month, projects=projects
+    )

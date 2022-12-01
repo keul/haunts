@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """Console script for haunts."""
 import datetime
 import os
@@ -41,7 +43,7 @@ from .report import report
     "--project",
     "-p",
     multiple=True,
-    help="project filter. Used only with --action=report to limit it to specific projects. Can be provided multiple times.",
+    help="project filter. Used to limit action to specific projects. Can be provided multiple times.",
     default=[],
 )
 @click.option(
@@ -109,12 +111,14 @@ def main(
             config_dir,
             sheet,
             days=[datetime.datetime.strptime(d, "%Y-%m-%d") for d in day],
+            projects=project,
         )
     elif action == "report":
         report(
             config_dir,
             sheet,
-            project=project,
+            days=day,
+            projects=project,
         )
     return 0
 

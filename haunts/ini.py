@@ -5,14 +5,21 @@ DEFAULT_INI = """[haunts]
 # The Google Sheet Document id where you register events
 # Required
 CONTROLLER_SHEET_DOCUMENT_ID=<Google Sheet Document Id here>
+
 # The sheet where to assign events category names to Google Calendar ids
 # Default is "config"
 # CONTROLLER_SHEET_NAME=config
+
 # Events in the day start time in HH:MM format
 # Default is 09:00
 # START_TIME=09:00
+
+# Nominal working hours per day
+# Default is 8
+# WORKING_HOURS=8
+
 # Overtime start date in HH:MM format
-# Default is 20:00
+# Default is empty: no overtime
 # OVERTIME_FROM=20:00
 """
 
@@ -34,6 +41,6 @@ def init(config_file):
 
 def get(name, default=None):
     value = parser["haunts"].get(name, default)
-    if value is None:
+    if value is None and default is None:
         raise KeyError(f"Not found: {name}")
     return default if value is None else value

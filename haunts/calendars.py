@@ -15,7 +15,7 @@ LOCAL_TIMEZONE = datetime.datetime.utcnow().astimezone().strftime("%z")
 ORIGIN_TIME = datetime.datetime.strptime(
     f"1899-12-30T00:00:00{LOCAL_TIMEZONE}", "%Y-%m-%dT%H:%M:%S%z"
 )
-# If modifying these scopes, delete the calendars-token file.
+# If scopes are modified, delete the calendars-token file.
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 

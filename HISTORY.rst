@@ -6,7 +6,7 @@ History
 
 - Renamed ``--action`` to ``--execute``
 - new option:``--action`` to filter by values on "Action" column
-
+- new option:``--overtime`` to just report overtime amount
 
 0.4.0 (2022-12-01)
 ------------------

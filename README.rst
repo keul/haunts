@@ -84,6 +84,12 @@ To get the report instead of running calendar sync:
 
    haunts --execute report --day=2021-05-24 --day=2021-05-25 --day=2021-05-28 --project="Project X" May
 
+To just report overtime entries in the set:
+
+.. code-block:: bash
+
+   haunts --execute report --day=2021-05-24 --day=2021-05-25 --day=2021-05-28 --project="Project X" --overtime May
+
 How it works
 ------------
 
@@ -218,9 +224,7 @@ Using ``haunts -e report <SHEET_NAME>`` will read the source Spreadsheet to coll
 
 Both ``-p`` and ``-d`` parameters are allowed.
 
-The resulting table can be something like the following:
-
-.. code-block:: none
+The resulting table can be something like the following::
 
    Date        Project      Total
    ----------  ---------  -------
@@ -239,6 +243,8 @@ The resulting table can be something like the following:
 For every calendar and day found in the sheet, it report a total of hours spent.
 
 Full day events are taken into account, and the overwork is also supported by configuring both ``OVERTIME_FROM`` (default is: no overwork support) and ``WORKING_HOURS`` (default is: 8).
+
+If you want to report overtime, you can use the ``--overtime`` flag, and only overtime rows will counted.
 
 TODO and known issues
 =====================
@@ -265,6 +271,27 @@ But "presenza" is the same term used in italian for "participation", so how we c
 And filling worklogs haunt us.
 
 .. image:: https://raw.githubusercontent.com/keul/haunts/main/docs/pm.gif
+
+Roadmap
+=======
+
+The following ambitious roadmap based on maturtiy level of the software, no timeline available yet.
+
+- Alpha
+  
+  Fill worklogs in my place
+- Beta
+  
+  Integration with GitHib Copilot, to write code for me
+- Production/Stable
+  
+  Integration with GPT-3, to reply to collegue on Slack in my place
+- Mature
+  
+  Profit
+- Retire
+  
+  (*I mean me… not the software*)
 
 Credits
 =======

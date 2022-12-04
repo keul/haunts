@@ -56,6 +56,14 @@ from . import actions
     default=[],
 )
 @click.option(
+    "--overtime",
+    "-o",
+    help="filter report to just display overtime stats. OVERTIME_FROM must be enabled in configuration file.",
+    is_flag=True,
+    show_default=True,
+    default=False,
+)
+@click.option(
     "--version",
     "-v",
     "show_version",
@@ -69,6 +77,7 @@ def main(
     execute="sync",
     action=[],
     project=[],
+    overtime=False,
     show_version=False,
 ):
     """
@@ -125,12 +134,7 @@ def main(
             allowed_actions=action,
         )
     elif execute == "report":
-        report(
-            config_dir,
-            sheet,
-            days=day,
-            projects=project,
-        )
+        report(config_dir, sheet, days=day, projects=project, overtime=overtime)
     return 0
 
 

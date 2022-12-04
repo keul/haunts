@@ -1,19 +1,20 @@
 """Report module."""
 
-import sys
-import click
 import datetime
 import numbers
-from googleapiclient.discovery import build
+import sys
+
+import click
 from colorama import Back, Fore, Style
+from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from tabulate import tabulate, SEPARATING_LINE
+from tabulate import SEPARATING_LINE, tabulate
 
 from . import LOGGER
-from .credentials import get_credentials
-from .spreadsheet import get_headers, get_col, ORIGIN_TIME
 from .calendars import LOCAL_TIMEZONE
+from .credentials import get_credentials
 from .ini import get
+from .spreadsheet import ORIGIN_TIME, get_col, get_headers
 
 # If scopes are modified, delete the sheets-token file
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -35,7 +36,7 @@ def adjust_full_day(proj_stats):
             break
 
 
-def print_report(report, days=[], projects=[]):
+def print_report(report, days=[], projects=[], overtime=False):
     rows = []
     gran_total = 0
     # Tranform report to be tabulate compatible
@@ -44,8 +45,21 @@ def print_report(report, days=[], projects=[]):
         if proj_stats.get("have_full_day", False):
             adjust_full_day(proj_stats)
         for project, stat in proj_stats["projects"].items():
-            total = stat["total"]
-            if (not projects or project in projects) and (not days or date in days):
+            overtime_value = stat["overtime"]
+            if overtime and overtime_value:
+                # Just want to count the overtime amount
+                total = overtime_value
+            else:
+                total = stat["total"]
+
+            if (
+                # not filtering by project, or project is in the list
+                (not projects or project in projects)
+                # not filtering by days, or day is in the list
+                and (not days or date in days)
+                # not filtering by overtime, or this is an overtime entry
+                and (not overtime or overtime_value)
+            ):
                 rows.append([date, project, total])
                 gran_total += total
 
@@ -57,12 +71,20 @@ def print_report(report, days=[], projects=[]):
     click.echo(tabulate(rows, headers=headers, tablefmt="simple"))
 
 
-def create_report(sheet, sheet_name, data):
+def create_report(sheet, sheet_name, data, overtime=False):
     """Create a time consumption report from a sheet."""
     headers_id = get_headers(sheet, sheet_name, indexes=True)
     overtime_from = get("OVERTIME_FROM", default=False)
 
     dates = {}
+
+    if overtime and not get("OVERTIME_FROM"):
+        click.echo(
+            Back.RED
+            + f"Cannot filter by --overtime: OVERTIME_FROM is not set."
+            + Style.RESET_ALL
+        )
+        sys.exit(1)
 
     for y, row in enumerate(data["values"]):
 
@@ -133,7 +155,7 @@ def create_report(sheet, sheet_name, data):
     return dates
 
 
-def report(config_dir, sheet_name, days=[], projects=[]):
+def report(config_dir, sheet_name, days=[], projects=[], overtime=False):
     """Open a sheet, analyze it and extract stats."""
     # The ID and range of the controller timesheet
     creds = get_credentials(config_dir, SCOPES, "sheets-token.json")
@@ -172,8 +194,10 @@ def report(config_dir, sheet_name, days=[], projects=[]):
         click.echo(err.error_details)
         sys.exit(1)
 
-    report = create_report(sheet=sheet, sheet_name=sheet_name, data=data)
+    report = create_report(
+        sheet=sheet, sheet_name=sheet_name, data=data, overtime=overtime
+    )
 
     click.echo("")
-    print_report(report, days=days, projects=projects)
+    print_report(report, days=days, projects=projects, overtime=overtime)
     click.echo("")

@@ -1,7 +1,7 @@
 History
 =======
 
-0.4.1 (unreleased)
+0.5.0 (2022-12-04)
 ------------------
 
 - Renamed ``--action`` to ``--execute``

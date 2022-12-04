@@ -51,38 +51,47 @@ Command line help is accessible using:
 
    haunts --help
 
-Usage
+Usage by examples
+-----------------
+
+To sync every available entry in a sheet named "May": 
 
 .. code-block:: bash
 
-   haunts <SHEET_NAME>
+   haunts May
 
-…or…
-
-.. code-block:: bash
-
-   haunts -a <ACTION> <SHEET_NAME>
-
-You can limit events interaction to a single day, or a set of days by using the ``-d`` parameter (can be used multiple times):
+To limits sync to events on a limited set of days:
 
 .. code-block:: bash
 
-   haunts --day=2021-07-08 <SHEET_NAME>
+   haunts --day=2021-05-24 --day=2021-05-25 --day=2021-05-28 May
 
-You can limit events interaction to a single calendar, or a set of calendars by using the ``-p`` parameter (can be used multiple times):
+To also limits sync to some projects (calendars):
 
 .. code-block:: bash
 
-   haunts --project=Foo <SHEET_NAME>
+   haunts --day=2021-05-24 --day=2021-05-25 --day=2021-05-28 --project="Project X" May
+
+To execute only on rows where a "delete" action is defined (see "Actions" below):
+
+.. code-block:: bash
+
+   haunts --day=2021-05-24 --day=2021-05-25 --day=2021-05-28 --project="Project X" -a D May
+
+To get the report instead of running calendar sync:
+
+.. code-block:: bash
+
+   haunts --execute report --day=2021-05-24 --day=2021-05-25 --day=2021-05-28 --project="Project X" May
 
 How it works
 ------------
 
-What haunts does depends on the ``--action`` parameter.
+What haunts does depends on the ``--execute`` parameter.
 
-In its default configuration (if ``--action`` is omitted, or equal to ``sync``), the command will try to access a Google Spreatsheet you must own (write access required), specifically it will read a single sheet at time inside the spreadsheet.
+In its default configuration (if ``--execute`` is omitted, or equal to ``sync``), the command will try to access a Google Spreatsheet you must have access to (write access required), specifically: it will read a single sheet at time inside that spreadsheet.
 
-Alternatively you can use the ``report`` value. In this case it just access the Google Spreadsheet to collect data on its content.
+Alternatively you can provide the ``report`` value. In this case it just access the Google Spreadsheet to collect data.
 
 Sheet definition
 ----------------
@@ -100,7 +109,7 @@ Every sheet should contains following headers:
 **Date**
   (date)
   
-  The day where the event will be created
+  The day where the event will be created. If the date is not found, the line will be treated as an empty line (so: skipped)
 
 **Start time**
   (time string in format ``HH:MM`` or empty) - *optional column*
@@ -110,7 +119,9 @@ Every sheet should contains following headers:
 **Spent**
   (number or empty)
   
-  How long the event will last. Leave empty to create a full-day event
+  How long the event will last. Leave empty to create a full-day event.
+  
+  When executiing the report, full day event length is influences by ``OVERTIME_FROM`` configuration option
 
 **Project**
   (string)
@@ -140,7 +151,7 @@ Every sheet should contains following headers:
 **Action**
   (char)
   
-  See below. If empty: it will be filled with an ``I`` when an event is created
+  See below. If empty: it will be filled with an ``I`` when an event is created from this row
 
 Configuring projects
 ~~~~~~~~~~~~~~~~~~~~
@@ -182,20 +193,28 @@ For every rows that match, *haunts* will:
 Actions
 -------
 
-Possible values you can find (or put yourself) in the ``Action`` column:
+Possible values you can find (or type yourself) in the ``Action`` column:
 
 - ``I``
   
-  *Ignore*: execution will just ignore this line
+  *ignore*: execution will just ignore this line. This is commonly automatically filled by haunts itself, but you can add this value manually to ignore the line.
 - ``D``
   
-  *Delete*: execution will clear ``Action``, ``Event id`` and ``Link`` cells for this row, and delete the related calendar event.
-  So: next execution will likely fill this line again (this is a poor-man-edit)
+  *delete*: execution will clear ``Action``, ``Event id`` and ``Link`` cells for this row, and delete the related event on the Google Calendar.
+  As also ``Action`` is cleared, next execution will likely fill this line again. Use this as a poor-man-edit, to change something on the event.
+
+When syncing a calendar (``--execute="sync``) you can use this column to filter on which rows execute sync by providing the ``--action`` option. For example:
+
+.. code-block:: bash
+
+   haunts --action delete July
+
+This will sync only rows where the "Action" column contains the delete (``D``) value.
 
 Reporting feature
 -----------------
 
-Using ``haunts -a report <SHEET_NAME>`` will read the source Spreadsheet to collect statistical data.
+Using ``haunts -e report <SHEET_NAME>`` will read the source Spreadsheet to collect statistical data.
 
 Both ``-p`` and ``-d`` parameters are allowed.
 
@@ -219,13 +238,15 @@ The resulting table can be something like the following:
 
 For every calendar and day found in the sheet, it report a total of hours spent.
 
-Full day events are taken into account, and the overwork is also supported by configuring both ``OVERTIME_FROM`` and ``WORKING_HOURS`` (default is 8).
+Full day events are taken into account, and the overwork is also supported by configuring both ``OVERTIME_FROM`` (default is: no overwork support) and ``WORKING_HOURS`` (default is: 8).
 
 TODO and known issues
 =====================
 
-* Rows in the sheet must be sorted ascending
+* rows in the sheet must be sorted ascending
 * *haunts* will not check for already filled time slots (yet?), so overlapping of events may happens
+* ``-e report`` is calculating values on Python side, you know… we have a more reliable spreadsheet there
+* ``-e report`` is counting overtime based on "Start time" column, while it's probably better to read start dates from events
 
 Why?!
 =====

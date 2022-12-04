@@ -4,7 +4,8 @@ History
 0.4.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Renamed ``--action`` to ``--execute``
+- new option:``--action`` to filter by values on "Action" column
 
 
 0.4.0 (2022-12-01)

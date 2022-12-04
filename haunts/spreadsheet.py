@@ -37,7 +37,9 @@ def get_headers(sheet, month, indexes=False):
     return {k: string.ascii_lowercase.upper()[values.index(k)] for k in values}
 
 
-def sync_events(config_dir, sheet, data, calendars, days, month, projects=[]):
+def sync_events(
+    config_dir, sheet, data, calendars, days, month, projects=[], allowed_actions=[]
+):
     """Create an event when action column is empty."""
     headers = get_headers(sheet, month)
     headers_id = get_headers(sheet, month, indexes=True)
@@ -58,9 +60,25 @@ def sync_events(config_dir, sheet, data, calendars, days, month, projects=[]):
         if action == actions.IGNORE:
             continue
 
+        if (
+            # We want to filter by Action value and current action is not in the provided set
+            (
+                allowed_actions
+                and action not in allowed_actions
+                and "empty" not in allowed_actions
+            )
+            or
+            # …or action is not empty and we want to act on empty Action lines only
+            (action and "empty" in allowed_actions)
+        ):
+            LOGGER.debug(
+                f"Action {action} at line {y+1}, not in allowed actions {allowed_actions}"
+            )
+            continue
+
         current_date = get_col(row, headers_id["Date"])
         if not current_date:
-            LOGGER.debug("No date found, skipping")
+            LOGGER.debug(f"No date found at line {y+1}, skipping")
             continue
 
         if projects and project not in projects:
@@ -217,7 +235,7 @@ def get_calendars(sheet):
     return {alias: id for [id, alias] in values}
 
 
-def sync_report(config_dir, month, days=[], projects=[]):
+def sync_report(config_dir, month, days=[], projects=[], allowed_actions=[]):
     """Open a sheet, analyze it and populate calendars with new events."""
     # The ID and range of the controller timesheet
     creds = get_credentials(config_dir, SCOPES, "sheets-token.json")
@@ -256,5 +274,12 @@ def sync_report(config_dir, month, days=[], projects=[]):
 
     calendars = get_calendars(sheet)
     sync_events(
-        config_dir, sheet, data, calendars, days=days, month=month, projects=projects
+        config_dir,
+        sheet,
+        data,
+        calendars,
+        days=days,
+        month=month,
+        projects=projects,
+        allowed_actions=allowed_actions,
     )

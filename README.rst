@@ -203,7 +203,7 @@ Possible values you can find (or type yourself) in the ``Action`` column:
 
 - ``I``
   
-  *ignore*: execution will just ignore this line. This is commonly automatically filled by haunts itself, but you can add this value manually to ignore the line.
+  *ignore*: execution will just ignore this line. This is commonly automatically filled by haunts itself, but you can add this value manually to ignore the line. Example: for events you already have on calendar but you want to track on the spreadsheet too.
 - ``D``
   
   *delete*: execution will clear ``Action``, ``Event id`` and ``Link`` cells for this row, and delete the related event on the Google Calendar.
@@ -275,7 +275,7 @@ And filling worklogs haunt us.
 Roadmap
 =======
 
-The following ambitious roadmap based on maturtiy level of the software, no timeline available yet.
+The following (ambitious) roadmap is based on the maturtiy level of the software, no timeline available yet.
 
 - Alpha
   
@@ -285,11 +285,11 @@ The following ambitious roadmap based on maturtiy level of the software, no time
   Integration with GitHib Copilot, to write code for me
 - Production/Stable
   
-  Integration with GPT-3, to reply to collegue on Slack in my place
+  Integration with GPT-3, to reply to collegues on Slack in my place
 - Mature
   
   Profit
-- Retire
+- Inactive
   
   (*I mean me… not the software*)
 

@@ -10,7 +10,7 @@ from googleapiclient.errors import HttpError
 from . import LOGGER
 from . import actions
 from .credentials import get_credentials
-from .calendars import ORIGIN_TIME, create_event, delete_event, formatDate
+from .calendars import ORIGIN_TIME, create_event, delete_event
 from .ini import get
 
 # If scopes are modified, delete the sheets-token file
@@ -113,7 +113,10 @@ def sync_events(
             click.echo(
                 Back.YELLOW
                 + Fore.BLACK
-                + f"Cannot find a calendar id associated to project \"{get_col(row, headers_id['Project'])}\" at line {y+2}"
+                + (
+                    f"Cannot find a calendar id associated to project "
+                    f"\"{get_col(row, headers_id['Project'])}\" at line {y+2}"
+                )
                 + Style.RESET_ALL
             )
             warn_lines.append(y)
@@ -126,7 +129,8 @@ def sync_events(
                 event_id=get_col(row, headers_id["Event id"]),
             )
             click.echo(
-                f'Deleted event "{get_col(row, headers_id["Activity"])}" in date {date.strftime("%d/%m")} from calendar {project}'
+                f'Deleted event "{get_col(row, headers_id["Activity"])}" in date '
+                f'{date.strftime("%d/%m")} from calendar {project}'
             )
             request = sheet.values().batchClear(
                 spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
@@ -219,7 +223,10 @@ def sync_events(
         click.echo(
             Back.YELLOW
             + Fore.BLACK
-            + f"⚠️ ⚠️ ⚠️ - There are {len(warn_lines)} lines with warnings. Please check them. ⚠️ ⚠️ ⚠️ "
+            + (
+                f"⚠️ ⚠️ ⚠️ - There are {len(warn_lines)} lines with warnings. "
+                "Please check them. ⚠️ ⚠️ ⚠️ "
+            )
             + Style.RESET_ALL
         )
 

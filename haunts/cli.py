@@ -52,13 +52,19 @@ from . import actions
     "--project",
     "-p",
     multiple=True,
-    help="project filter. Used to limit action to specific projects. Can be provided multiple times.",
+    help=(
+        "project filter. Used to limit action to specific projects. "
+        "Can be provided multiple times."
+    ),
     default=[],
 )
 @click.option(
     "--overtime",
     "-o",
-    help="filter report to just display overtime stats. OVERTIME_FROM must be enabled in configuration file.",
+    help=(
+        "filter report to just display overtime stats. "
+        "OVERTIME_FROM must be enabled in configuration file."
+    ),
     is_flag=True,
     show_default=True,
     default=False,
@@ -93,7 +99,10 @@ def main(
 
     if not run_configuration and not config_dir.is_dir():
         click.echo(
-            f"Configuation directory at {config_dir.resolve()} not found. Use --config  to create it."
+            (
+                f"Configuation directory at {config_dir.resolve()} not found. "
+                "Use --config  to create it."
+            )
         )
         sys.exit(1)
 
@@ -115,7 +124,7 @@ def main(
             sys.exit(1)
 
     if not run_configuration and not sheet:
-        click.echo(f"Argument SHEET is required if no '--config' flag is provided.")
+        click.echo("Argument SHEET is required if no '--config' flag is provided.")
         sys.exit(1)
 
     init(config)

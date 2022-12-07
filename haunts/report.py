@@ -81,7 +81,7 @@ def create_report(sheet, sheet_name, data, overtime=False):
     if overtime and not get("OVERTIME_FROM"):
         click.echo(
             Back.RED
-            + f"Cannot filter by --overtime: OVERTIME_FROM is not set."
+            + "Cannot filter by --overtime: OVERTIME_FROM is not set."
             + Style.RESET_ALL
         )
         sys.exit(1)
@@ -104,11 +104,11 @@ def create_report(sheet, sheet_name, data, overtime=False):
         if start_time and overtime_from:
             start = datetime.datetime.strptime(
                 f"{date.strftime('%Y-%m-%d')}T{start_time}:00{LOCAL_TIMEZONE}",
-                f"%Y-%m-%dT%H:%M:%S%z",
+                "%Y-%m-%dT%H:%M:%S%z",
             )
             overtime = datetime.datetime.strptime(
                 f"{date.strftime('%Y-%m-%d')}T{overtime_from}:00{LOCAL_TIMEZONE}",
-                f"%Y-%m-%dT%H:%M:%S%z",
+                "%Y-%m-%dT%H:%M:%S%z",
             )
             if start >= overtime:
                 in_overtime = True

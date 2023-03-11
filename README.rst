@@ -13,7 +13,7 @@ B-Open Haunts
 
 .. contents:: Table of Contents
 
-What is does
+What it does
 ============
 
 Fill Google Calendars with events taken from a Google Spreadsheet.

@@ -1,7 +1,7 @@
 History
 =======
 
-0.5.1 (unreleased)
+0.6.0 (2023-03-31)
 ------------------
 
 - Added ``II`` action

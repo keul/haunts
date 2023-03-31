@@ -1,6 +1,7 @@
 import time
 import datetime
 import click
+from colorama import Back, Fore, Style
 from dateutil import parser
 
 from googleapiclient.errors import HttpError
@@ -115,10 +116,23 @@ def delete_event(config_dir, calendar, event_id):
     creds = get_credentials(config_dir, SCOPES, "calendars-token.json")
     service = build("calendar", "v3", credentials=creds)
     if not event_id:
-        click.echo("Missing id. Skipping…")
+        click.echo(
+            Back.YELLOW
+            + Fore.BLACK
+            + "Missing event id, cannot delete"
+            + Style.RESET_ALL
+        )
         return
     try:
         service.events().delete(calendarId=calendar, eventId=event_id).execute()
     except HttpError as err:
-        if err.status_code == 410:
-            click.echo(f"Event {event_id} already deleted")
+        if err.status_code >= 400 and err.status_code < 500:
+            click.echo(
+                Back.YELLOW
+                + Fore.BLACK
+                + (
+                    f"Event {event_id} not found (status code {err.status_code}). "
+                    f"Maybe it's has been already deleted?"
+                )
+                + Style.RESET_ALL
+            )

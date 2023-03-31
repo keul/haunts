@@ -11,6 +11,7 @@ from googleapiclient.errors import HttpError
 from tabulate import SEPARATING_LINE, tabulate
 
 from . import LOGGER
+from . import actions
 from .calendars import LOCAL_TIMEZONE
 from .credentials import get_credentials
 from .ini import get
@@ -87,6 +88,16 @@ def create_report(sheet, sheet_name, data, overtime=False):
         sys.exit(1)
 
     for y, row in enumerate(data["values"]):
+
+        action = ""
+        try:
+            action = row[headers_id["Action"]]
+        except IndexError:
+            # We have no action defined
+            pass
+
+        if action == actions.IGNORE_ALL:
+            continue
 
         current_date = get_col(row, headers_id["Date"])
         if not current_date:

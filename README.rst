@@ -96,8 +96,10 @@ How it works
 What haunts does depends on the ``--execute`` parameter.
 
 In its default configuration (if ``--execute`` is omitted, or equal to ``sync``), the command will try to access a Google Spreatsheet you must have access to (write access required), specifically: it will read a single sheet at time inside that spreadsheet.
+Every row inside this sheet is an event that will be also created on a Google Calendar.
 
-Alternatively you can provide the ``report`` value. In this case it just access the Google Spreadsheet to collect data.
+Alternatively you can provide ``--execute report``.
+In this case it just access the Google Spreadsheet to collect data.
 
 Sheet definition
 ----------------
@@ -155,7 +157,7 @@ Every sheet should contains following headers:
   Leave this empty. It will be filled with a link to the event inside Google Calendar
 
 **Action**
-  (char)
+  (chars)
   
   See below. If empty: it will be filled with an ``I`` when an event is created from this row
 
@@ -204,16 +206,19 @@ Possible values you can find (or type yourself) in the ``Action`` column:
 - ``I``
   
   *ignore*: execution will just ignore this line. This is commonly automatically filled by haunts itself, but you can add this value manually to ignore the line. Example: for events you already have on calendar but you want to track on the spreadsheet too.
+- ``II``
+  
+  *ignore all*: same as ``I``, but also ignore rows in the ``--execute=report`` mode
 - ``D``
   
   *delete*: execution will clear ``Action``, ``Event id`` and ``Link`` cells for this row, and delete the related event on the Google Calendar.
   As also ``Action`` is cleared, next execution will likely fill this line again. Use this as a poor-man-edit, to change something on the event.
 
-When syncing a calendar (``--execute="sync``) you can use this column to filter on which rows execute sync by providing the ``--action`` option. For example:
+When syncing a calendar (``--execute=sync``) you can use this column to filter on which rows execute sync by providing the ``--action`` option. For example:
 
 .. code-block:: bash
 
-   haunts --action delete July
+   haunts --action D July
 
 This will sync only rows where the "Action" column contains the delete (``D``) value.
 
@@ -285,7 +290,7 @@ The following (ambitious) roadmap is based on the maturtiy level of the software
   Integration with GitHib Copilot, to write code for me
 - Production/Stable
   
-  Integration with GPT-3, to reply to collegues on Slack in my place
+  Integration with GTP-4, to reply to collegues on Slack in my place
 - Mature
   
   Profit

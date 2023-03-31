@@ -57,7 +57,7 @@ def sync_events(
 
         project = get_col(row, headers_id["Project"])
 
-        if action == actions.IGNORE:
+        if action == actions.IGNORE or action == actions.IGNORE_ALL:
             continue
 
         if (

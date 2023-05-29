@@ -21,6 +21,10 @@ CONTROLLER_SHEET_DOCUMENT_ID=<Google Sheet Document Id here>
 # Overtime start date in HH:MM format
 # Default is empty: no overtime
 # OVERTIME_FROM=20:00
+
+# User email.
+# Required for --execute read
+# USER_EMAIL=<your email here>
 """
 
 parser = configparser.RawConfigParser(allow_no_value=True)

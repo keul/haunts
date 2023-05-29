@@ -231,7 +231,8 @@ def sync_events(
         )
 
 
-def get_calendars(sheet):
+def get_calendars(sheet, ignore_alias=False):
+    """In case ignore_alias is true, only the first occurence of a calendar is returned."""
     RANGE = f"{get('CONTROLLER_SHEET_NAME', 'config')}!A2:B"
     calendars = (
         sheet.values()
@@ -239,7 +240,12 @@ def get_calendars(sheet):
         .execute()
     )
     values = calendars.get("values", [])
-    return {alias: id for [id, alias] in values}
+    configured_calendars = {}
+    for id, alias in values:
+        if ignore_alias and id in configured_calendars:
+            continue
+        configured_calendars[alias] = id
+    return configured_calendars
 
 
 def sync_report(config_dir, month, days=[], projects=[], allowed_actions=[]):

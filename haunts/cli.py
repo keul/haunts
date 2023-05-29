@@ -13,6 +13,7 @@ from .calendars import init as init_calendars
 from .spreadsheet import sync_report
 from .report import report
 from . import actions
+from .download import extract_events
 
 
 @click.command()
@@ -35,7 +36,7 @@ from . import actions
 @click.option(
     "--execute",
     "-e",
-    type=click.Choice(["sync", "report"], case_sensitive=False),
+    type=click.Choice(["sync", "report", "read"], case_sensitive=False),
     help="select which action to execute.",
     show_default=True,
     default="sync",
@@ -144,6 +145,8 @@ def main(
         )
     elif execute == "report":
         report(config_dir, sheet, days=day, projects=project, overtime=overtime)
+    elif execute == "read":
+        extract_events(config_dir, sheet)
     return 0
 
 

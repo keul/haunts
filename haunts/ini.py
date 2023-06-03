@@ -23,8 +23,12 @@ CONTROLLER_SHEET_DOCUMENT_ID=<Google Sheet Document Id here>
 # OVERTIME_FROM=20:00
 
 # User email.
-# Required for --execute read
+# Required for `--execute read`
 # USER_EMAIL=<your email here>
+
+# Preferred timezone
+# Default is GMT
+# TIMEZONE=Europe/Rom
 """
 
 parser = configparser.RawConfigParser(allow_no_value=True)

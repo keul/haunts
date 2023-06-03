@@ -34,9 +34,10 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
 
     from_time = from_time or get("START_TIME", "09:00")
     start = datetime.datetime.strptime(
-        f"{date.strftime('%Y-%m-%d')}T{from_time}:00{LOCAL_TIMEZONE}",
-        "%Y-%m-%dT%H:%M:%S%z",
+        f"{date.strftime('%Y-%m-%d')}T{from_time}:00Z",
+        "%Y-%m-%dT%H:%M:%SZ",
     )
+    print(start)
 
     startParams = None
     endParams = None
@@ -49,19 +50,27 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
         delta = datetime.timedelta(hours=0)
     end = start + delta
 
+    print(start.isoformat() + "Z")
+
     if haveLength:
+        # Event with a duration
         startParams = {
             "dateTime": start.isoformat(),
+            "timeZone": get("TIMEZONE", "Etc/GMT"),
         }
         endParams = {
             "dateTime": end.isoformat(),
+            "timeZone": get("TIMEZONE", "Etc/GMT"),
         }
     else:
+        # Full day event
         startParams = {
             "date": start.isoformat()[:10],
+            "timeZone": get("TIMEZONE", "Etc/GMT"),
         }
         endParams = {
             "date": (end + datetime.timedelta(days=1)).isoformat()[:10],
+            "timeZone": get("TIMEZONE", "Etc/GMT"),
         }
 
     event_body = {
@@ -73,7 +82,13 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
 
     def execute_creation():
         LOGGER.debug(calendar, date, summary, details, length, event_body, from_time)
-        event = service.events().insert(calendarId=calendar, body=event_body).execute()
+        try:
+            event = (
+                service.events().insert(calendarId=calendar, body=event_body).execute()
+            )
+        except HttpError as err:
+            LOGGER.error(f"Cannot create the event: {err.status_code}")
+            raise
         return event
 
     try:

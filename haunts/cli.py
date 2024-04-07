@@ -146,7 +146,11 @@ def main(
     elif execute == "report":
         report(config_dir, sheet, days=day, projects=project, overtime=overtime)
     elif execute == "read":
-        extract_events(config_dir, sheet)
+        extract_events(
+            config_dir,
+            sheet,
+            day=day[0] if day else datetime.date.today().strftime("%Y-%m-%d"),
+        )
     return 0
 
 

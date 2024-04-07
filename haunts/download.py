@@ -1,9 +1,14 @@
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
+import click
 
 from .ini import get
 from .credentials import get_credentials
-from .spreadsheet import get_calendars
+from .spreadsheet import (
+    append_line,
+    get_calendars_names,
+    get_calendars,
+)
 from .spreadsheet import SCOPES as SPREADSHEET_SCOPES
 from .calendars import SCOPES as CALENDAR_SCOPES
 
@@ -25,7 +30,8 @@ def filter_my_event(events):
             yield event
 
 
-def get_events(events_service, calendar_id, date):
+def get_events_at(events_service, calendar_id, date):
+    """Get all events from a calendar in a specific date."""
     start_datetime = datetime.combine(date, datetime.min.time()).isoformat() + "Z"
     end_datetime = (
         datetime.combine(date, datetime.min.time())
@@ -41,10 +47,15 @@ def get_events(events_service, calendar_id, date):
         timeZone=get("TIMEZONE", "Etc/GMT"),
     ).execute()
     events = events_result.get("items", [])
-    return events
+    # Enrich events with calendar_id
+    return [{**e, "calendar_id": calendar_id} for e in events]
 
 
-def extract_events(config_dir, sheet):
+def extract_events(config_dir, sheet, day):
+    """Public module entry point.
+
+    Extract events from Google Calendar and copy them to proper Google Sheet.
+    """
     calendar_credentials = get_credentials(
         config_dir, CALENDAR_SCOPES, "calendars-token.json"
     )
@@ -54,28 +65,51 @@ def extract_events(config_dir, sheet):
     calendar_service = build("calendar", "v3", credentials=calendar_credentials)
     spreadsheet_service = build("sheets", "v4", credentials=spreadsheeet_credentials)
 
-    date_to_check = datetime(
-        year=2023, month=5, day=21
+    date_to_check = datetime.strptime(
+        day, "%Y-%m-%d"
     ).date()  # Replace with the desired date
 
     events_service = calendar_service.events()
     sheet_service = spreadsheet_service.spreadsheets()
 
-    configued_calendars = get_calendars(sheet_service, ignore_alias=True)
-    print(configued_calendars)
-
+    configured_calendars = get_calendars(
+        sheet_service, ignore_alias=True, use_read_col=True
+    )
     all_events = []
-    for calendar_id in configued_calendars.values():
-        print(f"checking {calendar_id}")
-        events = get_events(events_service, calendar_id, date_to_check)
-        all_events.extend(filter_my_event(events))
+    # Get "my events" from all configured calendars in the selected date
+    already_added_events = set()
+    for calendar_id in configured_calendars.values():
+        events = get_events_at(events_service, calendar_id, date_to_check)
+        new_events = [
+            e for e in filter_my_event(events) if e["id"] not in already_added_events
+        ]
+        already_added_events.update([e["id"] for e in new_events])
+        all_events.extend(new_events)
 
+    # Get calendar configurations
+    calendar_names = get_calendars_names(sheet_service)
+
+    # Main operation loop
     for event in all_events:
-        print(event)
         event_summary = event.get("summary", "No summary")
-        start_time = event["start"].get("dateTime", event["start"].get("date"))
-        end_time = event["end"].get("dateTime", event["end"].get("date"))
-        print(f"Summary: {event_summary}")
-        print(f"Start Time: {start_time}")
-        print(f"End Time: {end_time}")
-        print("---")
+        start = event["start"].get("dateTime", event["start"].get("date"))
+        end = event["end"].get("dateTime", event["end"].get("date"))
+        project = calendar_names[event["calendar_id"]]
+
+        start_date = datetime.fromisoformat(start).date()
+        start_time = datetime.fromisoformat(start).time()
+        duration = datetime.fromisoformat(end) - datetime.fromisoformat(start)
+        click.echo(f"Adding new event {event_summary} ({project}) to selected sheet")
+        append_line(
+            sheet_service,
+            sheet,
+            date_col=start_date,
+            time_col=start_time,
+            duration_col=duration,
+            project_col=project,
+            activity_col=event_summary,
+            details_col=event.get("description", ""),
+            event_id_col=event["id"],
+            link_col=event.get("htmlLink", ""),
+            action_col="I",
+        )

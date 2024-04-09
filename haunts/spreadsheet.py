@@ -231,15 +231,157 @@ def sync_events(
         )
 
 
-def get_calendars(sheet):
-    RANGE = f"{get('CONTROLLER_SHEET_NAME', 'config')}!A2:B"
+def get_calendars(sheet, ignore_alias=False, use_read_col=False):
+    """In case ignore_alias is true, only the first occurence of a calendar is returned.
+
+    In case use_read_col is True, the preferred calendar id is taken from "read_from" column
+    """
+    RANGE = f"{get('CONTROLLER_SHEET_NAME', 'config')}!A2:C"
     calendars = (
         sheet.values()
         .get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE)
         .execute()
     )
     values = calendars.get("values", [])
-    return {alias: id for [id, alias] in values}
+    configured_calendars = {}
+    for cols in values:
+        if not use_read_col:
+            id, alias = cols
+            read_from = None
+        else:
+            try:
+                id, alias, read_from = cols
+            except ValueError:
+                # no linked_id
+                id, alias = cols
+                read_from = None
+        if ignore_alias and (
+            id in configured_calendars or read_from in configured_calendars
+        ):
+            continue
+        configured_calendars[alias] = read_from or id
+    return configured_calendars
+
+
+def get_calendars_names(sheet):
+    """Get all calendars names, giving precedence to alias defined in column "linked_calendar".
+
+    If aliases are found, the first one will be used
+    """
+    RANGE = f"{get('CONTROLLER_SHEET_NAME', 'config')}!A2:C"
+    calendars = (
+        sheet.values()
+        .get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE)
+        .execute()
+    )
+    values = calendars.get("values", [])
+    names = {}
+    for cols in values:
+        try:
+            id, alias, linked_id = cols
+        except ValueError:
+            # no linked_id
+            id, alias = cols
+            linked_id = None
+        if names.get(linked_id) or (names.get(id) and not linked_id):
+            continue
+        names[linked_id or id] = alias
+    return names
+
+
+def get_first_empty_line(sheet, month):
+    """Get the first empty line in a month."""
+    RANGE = f"{month}!A1:A"
+    lines = (
+        sheet.values()
+        .get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE)
+        .execute()
+    )
+    values = lines.get("values", [])
+    return len(values) + 1
+
+
+def format_duration(duration):
+    """Given a timedelta duration, format is as a string.
+
+    String format will be H,X or H if minutes are 0.
+    X is the decimal part of the hour (30 minutes are 0.5 hours, etc)
+    """
+    hours = duration.total_seconds() / 3600
+    if hours % 1 == 0:
+        return str(int(hours))
+    return str(hours).replace(".", ",")
+
+
+def append_line(
+    sheet,
+    month,
+    date_col,
+    time_col,
+    project_col,
+    activity_col,
+    event_id_col=None,
+    link_col="",
+    details_col="",
+    action_col="",
+    duration_col=None,
+):
+    """Append a new line at the end of a sheet."""
+    next_av_line = get_first_empty_line(sheet, month)
+    headers_id = get_headers(sheet, month, indexes=True)
+    # Now write a new line at position next_av_line
+    RANGE = f"{month}!A{next_av_line}:ZZ{next_av_line}"
+    values_line = []
+    formatted_time_col = time_col.strftime("%H:%M") if time_col else ""
+    formatted_duration_col = format_duration(duration_col) if duration_col else ""
+    full_day = formatted_time_col == "00:00" and formatted_duration_col == "24"
+    for key, index in headers_id.items():
+        if key == "Date":
+            values_line.append(date_col.strftime("%d/%m/%Y"))
+        elif key == "Start time":
+            values_line.append(formatted_time_col if not full_day else "")
+        elif key == "Project":
+            values_line.append(project_col)
+        elif key == "Activity":
+            values_line.append(activity_col)
+        elif key == "Details":
+            values_line.append(details_col)
+        elif key == "Event id":
+            values_line.append(event_id_col)
+        elif key == "Link":
+            values_line.append(link_col)
+        elif key == "Action":
+            values_line.append(action_col)
+        elif key == "Spent":
+            values_line.append(formatted_duration_col if not full_day else "")
+        else:
+            values_line.append("")
+
+    request = sheet.values().batchUpdate(
+        spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
+        body={
+            "valueInputOption": "USER_ENTERED",
+            "data": [
+                {
+                    "range": RANGE,
+                    "values": [values_line],
+                },
+            ],
+        },
+    )
+
+    try:
+        request.execute()
+    except HttpError as err:
+        if err.status_code == 429:
+            click.echo("Too many requests")
+            click.echo(err.error_details)
+            click.echo("haunts will now pause for a while ⏲…")
+            time.sleep(60)
+            click.echo("Retrying…")
+            request.execute()
+        else:
+            raise
 
 
 def sync_report(config_dir, month, days=[], projects=[], allowed_actions=[]):

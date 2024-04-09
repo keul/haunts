@@ -16,7 +16,7 @@ B-Open Haunts
 What it does
 ============
 
-Fill Google Calendars with events taken from a Google Spreadsheet.
+Fill Google Calendars with events taken from a Google Spreadsheet. Or the other way around.
 
 How to install
 ==============
@@ -90,6 +90,18 @@ To just report overtime entries in the set:
 
    haunts --execute report --day=2021-05-24 --day=2021-05-25 --day=2021-05-28 --project="Project X" --overtime May
 
+To *read* today events from all configured calendar and write them on your "May" sheet for the current:
+
+.. code-block:: bash
+
+   haunts --execute read May
+
+To *read* events for a specific date from all configured calendar and write them on your "May" sheet for the current:
+
+.. code-block:: bash
+
+   haunts --execute read -d 2023-05-15 May
+
 How it works
 ------------
 
@@ -98,8 +110,14 @@ What haunts does depends on the ``--execute`` parameter.
 In its default configuration (if ``--execute`` is omitted, or equal to ``sync``), the command will try to access a Google Spreatsheet you must have access to (write access required), specifically: it will read a single sheet at time inside that spreadsheet.
 Every row inside this sheet is an event that will be also created on a Google Calendar.
 
-Alternatively you can provide ``--execute report``.
-In this case it just access the Google Spreadsheet to collect data.
+Alternatively you can provide:
+
+- ``--execute report``.
+  
+  In this case it just access the Google Spreadsheet to collect data.
+- ``--execute read``.
+  
+  In this case it fills the Google Spreadsheet for you, by *reading* you calendars.
 
 Sheet definition
 ----------------
@@ -164,18 +182,23 @@ Every sheet should contains following headers:
 Configuring projects
 ~~~~~~~~~~~~~~~~~~~~
 
-The spreadsheet must also contains a *configuration sheet* (default name is ``config``, can be changed in the .ini) where you must put two columns (with headers):
+The spreadsheet must also contains a *configuration sheet* (default name is ``config``, can be changed in the .ini) where you must put at least two columns (with same headers as follows):
 
 **id**
   The id of a Google Calendar associated to this project.
   You must have write access to this calendar.
 
 **name**
-  The name of the project, like an alias to the calendar
+  The name of the project, like a human readable name for a calendar.
+  A project name can be associated to the same calendar id multiple times (this way you can have aliases).
 
-A project name can be associated to the same calendar id multiple times.
+**read_from** (optional)
+  User only for ``--execute read``.
 
-Values in the ``name`` column are the only valid values for the ``Project`` column introduced above
+  Read events from this (optional) calendar id instead of the main one.
+  This makes possible to *read* events from a calendar, but store them in another ones.
+
+Values in the ``name`` column are valid values for the ``Project`` column introduced above.
 
 How events will be filled
 -------------------------

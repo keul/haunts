@@ -1,10 +1,16 @@
 History
 =======
 
-0.6.1 (unreleased)
+0.7.1 (unreleased)
 ------------------
 
 - Nothing changed yet.
+
+
+0.7.0 (2024-04-09)
+------------------
+
+- Added ``read`` option to ``--execute``
 
 
 0.6.0 (2023-03-31)

@@ -4,7 +4,7 @@ History
 0.6.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added ``read`` option to ``--execute``
 
 
 0.6.0 (2023-03-31)

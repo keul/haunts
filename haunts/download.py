@@ -25,7 +25,9 @@ def filter_my_event(events):
         if event.get("creator", {}).get("email") == USER_EMAIL:
             yield event
         elif USER_EMAIL in [
-            attendee.get("email") for attendee in event.get("attendees", [])
+            attendee.get("email")
+            for attendee in event.get("attendees", [])
+            if attendee.get("responseStatus") in ["accepted", "needsAction"]
         ]:
             yield event
 

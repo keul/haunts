@@ -37,11 +37,10 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
         f"{date.strftime('%Y-%m-%d')}T{from_time}:00Z",
         "%Y-%m-%dT%H:%M:%SZ",
     )
-    print(start)
 
     startParams = None
     endParams = None
-    haveLength = length is not None and type(length) is not str
+    haveLength = length is not None and not isinstance(length, str)
     duration = None
     if haveLength:
         duration = float(length)
@@ -49,8 +48,6 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
     else:
         delta = datetime.timedelta(hours=0)
     end = start + delta
-
-    print(start.isoformat() + "Z")
 
     if haveLength:
         # Event with a duration

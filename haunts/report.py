@@ -147,7 +147,7 @@ def create_report(sheet, sheet_name, data, overtime=False):
             prog_stats["total"] += spent
             if in_overtime:
                 prog_stats["overtime"] += spent
-        elif type(spent) == str and not spent:
+        elif isinstance(spent, str) and not spent:
             # Check: we have multiple full days in the same day! haunts is not supporting this
             if date_stats["have_full_day"]:
                 click.echo(

@@ -263,10 +263,10 @@ def get_calendars(sheet, ignore_alias=False, use_read_col=False):
     return configured_calendars
 
 
-def get_calendars_names(sheet):
+def get_calendars_names(sheet, flat=True):
     """Get all calendars names, giving precedence to alias defined in column "linked_calendar".
 
-    If aliases are found, the first one will be used
+    If multiple aliases are found, the first one will be used
     """
     RANGE = f"{get('CONTROLLER_SHEET_NAME', 'config')}!A2:C"
     calendars = (
@@ -285,7 +285,9 @@ def get_calendars_names(sheet):
             linked_id = None
         if names.get(linked_id) or (names.get(id) and not linked_id):
             continue
-        names[linked_id or id] = alias
+        names[linked_id or id] = (
+            alias if flat else {"alias": alias, "is_linked": bool(linked_id)}
+        )
     return names
 
 

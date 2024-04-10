@@ -4,7 +4,8 @@ History
 0.7.1 (unreleased)
 ------------------
 
-- report event selection: if user is in invited list, add the event only if she/he accepted or not answered
+- read event selection: if user is in invited list, add the event only if she/he accepted or not answered
+- read events: do not put event id (I action flag) when event cames from a linked calendar
 
 
 0.7.0 (2024-04-09)

@@ -89,14 +89,15 @@ def extract_events(config_dir, sheet, day):
         all_events.extend(new_events)
 
     # Get calendar configurations
-    calendar_names = get_calendars_names(sheet_service)
+    calendar_names = get_calendars_names(sheet_service, flat=False)
 
     # Main operation loop
     for event in all_events:
         event_summary = event.get("summary", "No summary")
         start = event["start"].get("dateTime", event["start"].get("date"))
         end = event["end"].get("dateTime", event["end"].get("date"))
-        project = calendar_names[event["calendar_id"]]
+        project = calendar_names[event["calendar_id"]]["alias"]
+        is_linked = calendar_names[event["calendar_id"]]["is_linked"]
 
         start_date = datetime.fromisoformat(start).date()
         start_time = datetime.fromisoformat(start).time()
@@ -111,7 +112,7 @@ def extract_events(config_dir, sheet, day):
             project_col=project,
             activity_col=event_summary,
             details_col=event.get("description", ""),
-            event_id_col=event["id"],
+            event_id_col=event["id"] if not is_linked else "",
             link_col=event.get("htmlLink", ""),
-            action_col="I",
+            action_col="I" if not is_linked else "",
         )

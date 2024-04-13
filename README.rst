@@ -147,7 +147,7 @@ Every sheet should contains following headers:
   
   How long the event will last. Leave empty to create a full-day event.
   
-  When executiing the report, full day event length is influences by ``OVERTIME_FROM`` configuration option
+  When executing the report, full day event length is influences by ``OVERTIME_FROM`` configuration option
 
 **Project**
   (string)

@@ -1,7 +1,7 @@
 History
 =======
 
-0.7.1 (unreleased)
+0.7.1 (2024-04-13)
 ------------------
 
 - read event selection: if user is in invited list, add the event only if she/he accepted or not answered

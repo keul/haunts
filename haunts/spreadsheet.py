@@ -246,7 +246,11 @@ def get_calendars(sheet, ignore_alias=False, use_read_col=False):
     configured_calendars = {}
     for cols in values:
         if not use_read_col:
-            id, alias = cols
+            try:
+                id, alias = cols
+            except ValueError:
+                # not required alias column
+                id, alias, _ = cols
             read_from = None
         else:
             try:

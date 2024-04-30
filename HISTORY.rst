@@ -4,7 +4,7 @@ History
 0.7.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixed a bug introduced when with using action sync
 
 
 0.7.1 (2024-04-13)

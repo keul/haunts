@@ -1,7 +1,7 @@
 History
 =======
 
-0.7.2 (unreleased)
+0.7.2 (2024-05-01)
 ------------------
 
 - Fixed a bug introduced when with using action sync

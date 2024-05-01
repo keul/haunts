@@ -79,6 +79,7 @@ def extract_events(config_dir, sheet, day):
     configured_calendars = get_calendars(
         sheet_service, ignore_alias=True, use_read_col=True
     )
+    configured_calendars["???"] = get("USER_EMAIL")
     all_events = []
     # Get "my events" from all configured calendars in the selected date
     already_added_events = set()
@@ -92,6 +93,7 @@ def extract_events(config_dir, sheet, day):
 
     # Get calendar configurations
     calendar_names = get_calendars_names(sheet_service, flat=False)
+    calendar_names[get("USER_EMAIL")] = {"alias": "???", "is_linked": False}
 
     # Get a list of all events ids already present in the sheet
     # This to prevent adding the same event multiple times

@@ -6,6 +6,7 @@ History
 
 - Fixed a bug introduced when with using action sync
 - Read events: prevents creation of duplicates
+- Read events: now automatically read events from personal calendar
 
 0.7.1 (2024-04-13)
 ------------------

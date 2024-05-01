@@ -1,6 +1,7 @@
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
 import click
+from colorama import Back, Fore, Style
 
 from .ini import get
 from .credentials import get_credentials
@@ -8,6 +9,7 @@ from .spreadsheet import (
     append_line,
     get_calendars_names,
     get_calendars,
+    get_calendar_col_values,
 )
 from .spreadsheet import SCOPES as SPREADSHEET_SCOPES
 from .calendars import SCOPES as CALENDAR_SCOPES
@@ -91,6 +93,11 @@ def extract_events(config_dir, sheet, day):
     # Get calendar configurations
     calendar_names = get_calendars_names(sheet_service, flat=False)
 
+    # Get a list of all events ids already present in the sheet
+    # This to prevent adding the same event multiple times
+    all_sheet_events = get_calendar_col_values(sheet_service, sheet, "Event id")
+    all_sheet_event_urls = get_calendar_col_values(sheet_service, sheet, "Link")
+
     # Main operation loop
     for event in all_events:
         event_summary = event.get("summary", "No summary")
@@ -102,6 +109,27 @@ def extract_events(config_dir, sheet, day):
         start_date = datetime.fromisoformat(start).date()
         start_time = datetime.fromisoformat(start).time()
         duration = datetime.fromisoformat(end) - datetime.fromisoformat(start)
+        event_id = event["id"] if not is_linked else ""
+        if event_id and event_id in all_sheet_events:
+            click.echo(
+                Back.YELLOW
+                + Fore.BLACK
+                + (f"Event {event_summary} already present in the sheet. Skipping…")
+                + Style.RESET_ALL
+            )
+            continue
+        event_link = event.get("htmlLink", "")
+        if event_link and event_link in all_sheet_event_urls:
+            click.echo(
+                Back.YELLOW
+                + Fore.BLACK
+                + (
+                    f"A link to event {event_summary} already present in the sheet ({event_link}). "
+                    f"Skipping…"
+                )
+                + Style.RESET_ALL
+            )
+            continue
         click.echo(f"Adding new event {event_summary} ({project}) to selected sheet")
         append_line(
             sheet_service,
@@ -112,7 +140,7 @@ def extract_events(config_dir, sheet, day):
             project_col=project,
             activity_col=event_summary,
             details_col=event.get("description", ""),
-            event_id_col=event["id"] if not is_linked else "",
-            link_col=event.get("htmlLink", ""),
+            event_id_col=event_id,
+            link_col=event_link,
             action_col="I" if not is_linked else "",
         )

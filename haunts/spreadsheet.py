@@ -267,6 +267,22 @@ def get_calendars(sheet, ignore_alias=False, use_read_col=False):
     return configured_calendars
 
 
+def get_calendar_col_values(sheet, month, col_name):
+    """Get all events ids for a month."""
+    headers_ids = get_headers(sheet, month, indexes=True)
+    col_of_interest = headers_ids.get(col_name)
+    # transform a zero.based index to a capital letter
+    col_of_interest = string.ascii_uppercase[col_of_interest]
+    RANGE = f"{month}!{col_of_interest}2:{col_of_interest}"
+    events = (
+        sheet.values()
+        .get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE)
+        .execute()
+    )
+    values = events.get("values", [])
+    return [e[0] for e in values if e]
+
+
 def get_calendars_names(sheet, flat=True):
     """Get all calendars names, giving precedence to alias defined in column "linked_calendar".
 

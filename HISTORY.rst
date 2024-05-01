@@ -5,7 +5,7 @@ History
 ------------------
 
 - Fixed a bug introduced when with using action sync
-
+- Read events: prevents creation of duplicates
 
 0.7.1 (2024-04-13)
 ------------------

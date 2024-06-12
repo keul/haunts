@@ -5,7 +5,7 @@ History
 ------------------
 
 - Read events fix: do not set the ``I`` flag for unknown projects
-
+- Read events fix: events were not sorted by start time
 
 0.7.2 (2024-05-01)
 ------------------

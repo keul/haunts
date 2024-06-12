@@ -91,6 +91,9 @@ def extract_events(config_dir, sheet, day):
         already_added_events.update([e["id"] for e in new_events])
         all_events.extend(new_events)
 
+    # Sort events by start time
+    all_events.sort(key=lambda x: x["start"].get("dateTime", x["start"].get("date")))
+
     # Get calendar configurations
     calendar_names = get_calendars_names(sheet_service, flat=False)
     calendar_names[get("USER_EMAIL")] = {"alias": "???", "is_linked": False}

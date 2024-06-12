@@ -144,5 +144,5 @@ def extract_events(config_dir, sheet, day):
             details_col=event.get("description", ""),
             event_id_col=event_id,
             link_col=event_link,
-            action_col="I" if not is_linked else "",
+            action_col="I" if not is_linked and project != "???" else "",
         )

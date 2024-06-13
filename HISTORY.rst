@@ -1,7 +1,7 @@
 History
 =======
 
-0.7.3 (unreleased)
+0.7.3 (2024-06-13)
 ------------------
 
 - Read events fix: do not set the ``I`` flag for unknown projects

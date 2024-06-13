@@ -6,6 +6,7 @@ History
 
 - Read events fix: do not set the ``I`` flag for unknown projects
 - Read events fix: events were not sorted by start time
+- Read events fix: events time were read in UTC. Now using proper timezone configured
 
 0.7.2 (2024-05-01)
 ------------------

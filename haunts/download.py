@@ -1,3 +1,4 @@
+from dateutil import tz
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
 import click
@@ -36,16 +37,19 @@ def filter_my_event(events):
 
 def get_events_at(events_service, calendar_id, date):
     """Get all events from a calendar in a specific date."""
-    start_datetime = datetime.combine(date, datetime.min.time()).isoformat() + "Z"
+    start_datetime = datetime.combine(date, datetime.min.time())
     end_datetime = (
         datetime.combine(date, datetime.min.time())
         + timedelta(days=1)
         - timedelta(seconds=1)
-    ).isoformat() + "Z"
+    )
+    tz_obj = tz.gettz(get("TIMEZONE", "Etc/GMT"))
+    start_datetime = start_datetime.replace(tzinfo=tz_obj)
+    end_datetime = end_datetime.replace(tzinfo=tz_obj)
     events_result = events_service.list(
         calendarId=calendar_id,
-        timeMin=start_datetime,
-        timeMax=end_datetime,
+        timeMin=start_datetime.isoformat(),
+        timeMax=end_datetime.isoformat(),
         singleEvents=True,
         orderBy="startTime",
         timeZone=get("TIMEZONE", "Etc/GMT"),

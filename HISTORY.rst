@@ -4,7 +4,7 @@ History
 0.7.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Read events: added a bit of verbosity during operations
 
 
 0.7.3 (2024-06-13)

@@ -80,6 +80,8 @@ def extract_events(config_dir, sheet, day):
     events_service = calendar_service.events()
     sheet_service = spreadsheet_service.spreadsheets()
 
+    click.echo("Checking your calendars…")
+
     configured_calendars = get_calendars(
         sheet_service, ignore_alias=True, use_read_col=True
     )
@@ -106,6 +108,8 @@ def extract_events(config_dir, sheet, day):
     # This to prevent adding the same event multiple times
     all_sheet_events = get_calendar_col_values(sheet_service, sheet, "Event id")
     all_sheet_event_urls = get_calendar_col_values(sheet_service, sheet, "Link")
+
+    click.echo(f"Start downloading events for day {day}")
 
     # Main operation loop
     for event in all_events:
@@ -153,3 +157,8 @@ def extract_events(config_dir, sheet, day):
             link_col=event_link,
             action_col="I" if not is_linked and project != "???" else "",
         )
+
+    if not all_events:
+        click.echo("No events found.")
+    else:
+        click.echo("Done!")

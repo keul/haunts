@@ -1,7 +1,7 @@
 History
 =======
 
-0.7.4 (unreleased)
+0.7.4 (2024-06-25)
 ------------------
 
 - Read events: added a bit of verbosity during operations

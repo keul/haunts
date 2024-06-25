@@ -16,16 +16,21 @@ from .spreadsheet import SCOPES as SPREADSHEET_SCOPES
 from .calendars import SCOPES as CALENDAR_SCOPES
 
 
-def filter_my_event(events):
+def filter_my_events(events):
     """
     Take a list of Google Calendar events and returns events created by USER_EMAIL
     or events that have USER_EMAIL in the attendees list.
+
+    Exclude events where the user has declined the invitation.
     """
     USER_EMAIL = get("USER_EMAIL")
     if USER_EMAIL is None:
         raise KeyError("USER_EMAIL not set in configuration")
     for event in events:
-        if event.get("creator", {}).get("email") == USER_EMAIL:
+        if (
+            event.get("creator", {}).get("email") == USER_EMAIL
+            and event.get("attendees", []) == []
+        ):
             yield event
         elif USER_EMAIL in [
             attendee.get("email")
@@ -92,7 +97,7 @@ def extract_events(config_dir, sheet, day):
     for calendar_id in configured_calendars.values():
         events = get_events_at(events_service, calendar_id, date_to_check)
         new_events = [
-            e for e in filter_my_event(events) if e["id"] not in already_added_events
+            e for e in filter_my_events(events) if e["id"] not in already_added_events
         ]
         already_added_events.update([e["id"] for e in new_events])
         all_events.extend(new_events)
@@ -102,6 +107,7 @@ def extract_events(config_dir, sheet, day):
 
     # Get calendar configurations
     calendar_names = get_calendars_names(sheet_service, flat=False)
+    # Forcibly add the user's calendar to the list
     calendar_names[get("USER_EMAIL")] = {"alias": "???", "is_linked": False}
 
     # Get a list of all events ids already present in the sheet

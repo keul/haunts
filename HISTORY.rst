@@ -5,7 +5,7 @@ History
 ------------------
 
 - Read events: added a bit of verbosity during operations
-
+- Read events fix: do not add events takend by personal calendar user refused to attend
 
 0.7.3 (2024-06-13)
 ------------------

@@ -6,9 +6,10 @@ import os
 import sys
 from pathlib import Path
 from importlib.metadata import version
+from colorama import Fore, Style
 import click
 
-from .ini import create_default, init
+from .ini import create_default, init, get
 from .calendars import init as init_calendars
 from .spreadsheet import sync_report
 from .report import report
@@ -71,6 +72,11 @@ from .download import extract_events
     default=False,
 )
 @click.option(
+    "--filter",
+    "-f",
+    help='filter report glob search inside "Activity" columns. ',
+)
+@click.option(
     "--version",
     "-v",
     "show_version",
@@ -85,6 +91,7 @@ def main(
     action=[],
     project=[],
     overtime=False,
+    filter=None,
     show_version=False,
 ):
     """
@@ -134,6 +141,17 @@ def main(
         click.echo("All done. You can now start using haunts.")
         sys.exit(0)
 
+    try:
+        get("TIMEZONE")
+    except KeyError:
+        click.echo(
+            Fore.YELLOW
+            + "TIMEZONE not set in configuration. Default is on Etc/GMT but you should customize it"
+            + " (for example: TIMEZONE=Europe/Rome).\n"
+            + "To suppress this warning set TIMEZONE explicitly in haunts.ini."
+            + Style.RESET_ALL
+        )
+
     init_calendars(config_dir)
     if execute == "sync":
         sync_report(
@@ -144,7 +162,14 @@ def main(
             allowed_actions=action,
         )
     elif execute == "report":
-        report(config_dir, sheet, days=day, projects=project, overtime=overtime)
+        report(
+            config_dir,
+            sheet,
+            days=day,
+            projects=project,
+            overtime=overtime,
+            filter=filter,
+        )
     elif execute == "read":
         extract_events(
             config_dir,

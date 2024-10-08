@@ -1,11 +1,14 @@
 History
 =======
 
-0.7.5 (unreleased)
+0.8.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Improved ``read`` logging
+- A bit more verbose messages here and there
+- Added warning when event summary is empty
+- Added warning when ``TIMEZONE`` is not explicitly set
+- Added filters on report (``-f``)
 
 0.7.4 (2024-06-25)
 ------------------

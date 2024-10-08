@@ -115,6 +115,8 @@ def create_event(config_dir, calendar, date, summary, details, length, from_time
             f'in date {formatDate(event["start"]["date"], "%d/%m")} '
             f'on calendar {event["organizer"]["displayName"]}'
         )
+    if not summary:
+        click.echo(Back.YELLOW + Fore.BLACK + "Summary is empty!" + Style.RESET_ALL)
 
     event_data = {
         "id": event["id"],

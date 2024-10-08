@@ -46,6 +46,8 @@ def print_report(report, days=[], projects=[], overtime=False):
         if proj_stats.get("have_full_day", False):
             adjust_full_day(proj_stats)
         for project, stat in proj_stats["projects"].items():
+            if stat.get("ignore"):
+                continue
             overtime_value = stat["overtime"]
             if overtime and overtime_value:
                 # Just want to count the overtime amount
@@ -60,6 +62,8 @@ def print_report(report, days=[], projects=[], overtime=False):
                 and (not days or date in days)
                 # not filtering by overtime, or this is an overtime entry
                 and (not overtime or overtime_value)
+                # not marked has "ignore"
+                and (not proj_stats.get("ignore", False))
             ):
                 rows.append([date, project, total])
                 gran_total += total
@@ -72,7 +76,7 @@ def print_report(report, days=[], projects=[], overtime=False):
     click.echo(tabulate(rows, headers=headers, tablefmt="simple"))
 
 
-def create_report(sheet, sheet_name, data, overtime=False):
+def create_report(sheet, sheet_name, data, overtime=False, filter=None):
     """Create a time consumption report from a sheet."""
     headers_id = get_headers(sheet, sheet_name, indexes=True)
     overtime_from = get("OVERTIME_FROM", default=False)
@@ -138,6 +142,7 @@ def create_report(sheet, sheet_name, data, overtime=False):
                 "total": 0,
                 "overtime": 0,
                 "full_day": False,
+                "ignore": False,
             },
         )
         spent = get_col(row, headers_id["Spent"])
@@ -160,13 +165,17 @@ def create_report(sheet, sheet_name, data, overtime=False):
                 date_stats["have_full_day"] = True
                 prog_stats["full_day"] = True
 
+        # Filter defined, but it doesn't match
+        if filter and filter not in get_col(row, headers_id["Activity"], ""):
+            prog_stats["ignore"] = True
+
         date_stats["projects"][project] = prog_stats
         dates[str(date)] = date_stats
 
     return dates
 
 
-def report(config_dir, sheet_name, days=[], projects=[], overtime=False):
+def report(config_dir, sheet_name, days=[], projects=[], overtime=False, filter=None):
     """Open a sheet, analyze it and extract stats."""
     # The ID and range of the controller timesheet
     creds = get_credentials(config_dir, SCOPES, "sheets-token.json")
@@ -205,10 +214,10 @@ def report(config_dir, sheet_name, days=[], projects=[], overtime=False):
         click.echo(err.error_details)
         sys.exit(1)
 
-    report = create_report(
-        sheet=sheet, sheet_name=sheet_name, data=data, overtime=overtime
+    computed_report = create_report(
+        sheet=sheet, sheet_name=sheet_name, data=data, overtime=overtime, filter=filter
     )
 
     click.echo("")
-    print_report(report, days=days, projects=projects, overtime=overtime)
+    print_report(computed_report, days=days, projects=projects, overtime=overtime)
     click.echo("")

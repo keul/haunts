@@ -85,7 +85,7 @@ def extract_events(config_dir, sheet, day):
     events_service = calendar_service.events()
     sheet_service = spreadsheet_service.spreadsheets()
 
-    click.echo("Checking your calendars…")
+    click.echo(f"Checking your calendars at {day}…")
 
     configured_calendars = get_calendars(
         sheet_service, ignore_alias=True, use_read_col=True
@@ -149,7 +149,10 @@ def extract_events(config_dir, sheet, day):
                 + Style.RESET_ALL
             )
             continue
-        click.echo(f"Adding new event {event_summary} ({project}) to selected sheet")
+        click.echo(
+            f"Adding new event {event_summary} ({project}) "
+            f"{f'at {start_time}' if duration else 'full day'} to selected sheet"
+        )
         append_line(
             sheet_service,
             sheet,

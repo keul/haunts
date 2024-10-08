@@ -17,11 +17,11 @@ from .ini import get
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
-def get_col(row, index):
+def get_col(row, index, default=None):
     try:
         return row[index]
     except IndexError:
-        return None
+        return default
 
 
 def get_headers(sheet, month, indexes=False):

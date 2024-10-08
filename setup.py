@@ -51,6 +51,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/keul/haunts",
-    version="0.7.5.dev0",
+    version="0.8.0",
     zip_safe=False,
 )

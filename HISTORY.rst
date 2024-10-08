@@ -1,7 +1,7 @@
 History
 =======
 
-0.8.0 (unreleased)
+0.8.0 (2024-10-08)
 ------------------
 
 - Improved ``read`` logging

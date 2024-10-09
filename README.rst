@@ -193,9 +193,9 @@ The spreadsheet must also contains a *configuration sheet* (default name is ``co
   A project name can be associated to the same calendar id multiple times (this way you can have aliases).
 
 **read_from** (optional)
-  User only for ``--execute read``.
+  Used only for ``--execute read``.
 
-  Read events from this (optional) calendar id instead of the main one.
+  Read events from this (optional) calendar id instead of the canonical one (the one defined in the ``id`` column).
   This makes possible to *read* events from a calendar, but store them in another ones.
 
 Values in the ``name`` column are valid values for the ``Project`` column introduced above.

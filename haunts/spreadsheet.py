@@ -194,9 +194,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month, projects=[], al
                     # Quick link to the event on the calendar
                     {
                         "range": f"{month}!{headers[get('LINK_COLUMN_NAME', 'Link')]}{y + 2}",
-                        "values": [
-                            [f"=HYPERLINK(\"{event[get('LINK_COLUMN_NAME', 'Link')]}\";\"open\")"]
-                        ],
+                        "values": [[f"=HYPERLINK(\"{event['link']}\";\"open\")"]],
                     },
                 ],
             },

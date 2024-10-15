@@ -41,7 +41,11 @@ def print_report(report, days=[], projects=[], overtime=False):
     rows = []
     gran_total = 0
     # Tranform report to be tabulate compatible
-    headers = ["Date", "Project", "Total"]
+    headers = [
+        get("DATE_COLUMN_NAME", "Date"),
+        get("PROJECT_COLUMN_NAME", "Project"),
+        get("TOTAL_COLUMN_NAME", "Total"),
+    ]
     for date, proj_stats in report.items():
         if proj_stats.get("have_full_day", False):
             adjust_full_day(proj_stats)
@@ -103,15 +107,16 @@ def create_report(sheet, sheet_name, data, overtime=False, filter=None):
         if action == actions.IGNORE_ALL:
             continue
 
-        current_date = get_col(row, headers_id["Date"])
+        current_date = get_col(row, headers_id[get("DATE_COLUMN_NAME", "Date")])
         if not current_date:
             LOGGER.debug("No date found, skipping")
             continue
 
         date = (ORIGIN_TIME + datetime.timedelta(days=current_date)).date()
         start_time = (
-            get_col(row, headers_id["Start time"])
-            if headers_id.get("Start time") and get_col(row, headers_id["Start time"])
+            get_col(row, headers_id[get("START_TIME_COLUMN_NAME", "Start time")])
+            if headers_id.get(get("START_TIME_COLUMN_NAME", "Start time"))
+            and get_col(row, headers_id[get("START_TIME_COLUMN_NAME", "Start time")])
             else None
         )
 
@@ -128,7 +133,7 @@ def create_report(sheet, sheet_name, data, overtime=False, filter=None):
             if start >= overtime:
                 in_overtime = True
 
-        project = get_col(row, headers_id["Project"])
+        project = get_col(row, headers_id[get("PROJECT_COLUMN_NAME", "Project")])
         date_stats = dates.get(
             str(date),
             {
@@ -145,7 +150,7 @@ def create_report(sheet, sheet_name, data, overtime=False, filter=None):
                 "ignore": False,
             },
         )
-        spent = get_col(row, headers_id["Spent"])
+        spent = get_col(row, headers_id[get("SPENT_COLUMN_NAME", "Spent")])
 
         # We have a value of spent hours in this event
         if isinstance(spent, numbers.Number):

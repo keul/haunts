@@ -29,6 +29,13 @@ CONTROLLER_SHEET_DOCUMENT_ID=<Google Sheet Document Id here>
 # Preferred timezone
 # Default is GMT
 # TIMEZONE=Europe/Rom
+
+# Columns name
+# PROJECT_COLUMN_NAME=Project
+# SPENT_COLUMN_NAME=Spent
+# ACTIVITY_COLUMN_NAME=Activity
+# START_TIME_COLUMN_NAME=Start
+# DETAILS_COLUMN_NAME=Details
 """
 
 parser = configparser.RawConfigParser(allow_no_value=True)

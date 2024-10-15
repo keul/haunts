@@ -37,9 +37,7 @@ def get_headers(sheet, month, indexes=False):
     return {k: string.ascii_lowercase.upper()[values.index(k)] for k in values}
 
 
-def sync_events(
-    config_dir, sheet, data, calendars, days, month, projects=[], allowed_actions=[]
-):
+def sync_events(config_dir, sheet, data, calendars, days, month, projects=[], allowed_actions=[]):
     """Create an event when action column is empty."""
     headers = get_headers(sheet, month)
     headers_id = get_headers(sheet, month, indexes=True)
@@ -50,12 +48,12 @@ def sync_events(
     for y, row in enumerate(data["values"]):
         action = ""
         try:
-            action = row[headers_id["Action"]]
+            action = row[headers_id[get("ACTION_COLUMN_NAME", "Action")]]
         except IndexError:
             # We have no action defined
             pass
 
-        project = get_col(row, headers_id["Project"])
+        project = get_col(row, headers_id[get("PROJECT_COLUMN_NAME", "Project")])
 
         if action == actions.IGNORE or action == actions.IGNORE_ALL:
             continue
@@ -86,8 +84,9 @@ def sync_events(
 
         date = ORIGIN_TIME + datetime.timedelta(days=current_date)
         default_start_time = (
-            get_col(row, headers_id["Start time"])
-            if headers_id.get("Start time") and get_col(row, headers_id["Start time"])
+            get_col(row, headers_id[get("START_TIME_COLUMN_NAME", "Start time")])
+            if headers_id.get(get("START_TIME_COLUMN_NAME", "Start time"))
+            and get_col(row, headers_id[get("START_TIME_COLUMN_NAME", "Start time")])
             else None
         )
 
@@ -126,19 +125,19 @@ def sync_events(
             delete_event(
                 config_dir=config_dir,
                 calendar=calendar,
-                event_id=get_col(row, headers_id["Event id"]),
+                event_id=get_col(row, headers_id[get("EVENT_ID_COLUMN_NAME", "Event id")]),
             )
             click.echo(
-                f'Deleted event "{get_col(row, headers_id["Activity"])}" in date '
+                f'Deleted event "{get_col(row, headers_id[get("ACTIVITY_COLUMN_NAME", "Activity")])}" in date '
                 f'{date.strftime("%d/%m")} from calendar {project}'
             )
             request = sheet.values().batchClear(
                 spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
                 body={
                     "ranges": [
-                        f"{month}!{headers['Event id']}{y + 2}",
-                        f"{month}!{headers['Link']}{y + 2}",
-                        f"{month}!{headers['Action']}{y + 2}",
+                        f"{month}!{headers[get('EVENT_ID_COLUMN_NAME', 'Event id')]}{y + 2}",
+                        f"{month}!{headers[get('LINK_COLUMN_NAME', 'Link')]}{y + 2}",
+                        f"{month}!{headers[get('ACTION_COLUMN_NAME', 'Action')]}{y + 2}",
                     ],
                 },
             )
@@ -173,9 +172,9 @@ def sync_events(
             config_dir=config_dir,
             calendar=calendar,
             date=date,
-            summary=get_col(row, headers_id["Activity"]),
-            details=get_col(row, headers_id["Details"]),
-            length=get_col(row, headers_id["Spent"]),
+            summary=get_col(row, headers_id[get("ACTIVITY_COLUMN_NAME", "Activity")]),
+            details=get_col(row, headers_id[get("DETAILS_COLUMN_NAME", "Details")]),
+            length=get_col(row, headers_id[get("SPENT_COLUMN_NAME", "Spent")]),
             from_time=default_start_time or last_to_time,
         )
         last_to_time = event["next_slot"]
@@ -187,18 +186,20 @@ def sync_events(
                 "data": [
                     # Put the action to actions.IGNORE, in this way it will not be processed again
                     {
-                        "range": f"{month}!{headers['Action']}{y + 2}",
+                        "range": f"{month}!{headers[get('ACTION_COLUMN_NAME', 'Action')]}{y + 2}",
                         "values": [[actions.IGNORE]],
                     },
                     # Save the event id, required to interact with the event in future
                     {
-                        "range": f"{month}!{headers['Event id']}{y + 2}",
+                        "range": f"{month}!{headers[get('EVENT_ID_COLUMN_NAME', 'Event id')]}{y + 2}",
                         "values": [[event["id"]]],
                     },
                     # Quick link to the event on the calendar
                     {
-                        "range": f"{month}!{headers['Link']}{y + 2}",
-                        "values": [[f"=HYPERLINK(\"{event['link']}\";\"open\")"]],
+                        "range": f"{month}!{headers[get('LINK_COLUMN_NAME', 'Link')]}{y + 2}",
+                        "values": [
+                            [f"=HYPERLINK(\"{event[get('LINK_COLUMN_NAME', 'Link')]}\";\"open\")"]
+                        ],
                     },
                 ],
             },
@@ -360,21 +361,21 @@ def append_line(
     for key, index in headers_id.items():
         if key == "Date":
             values_line.append(date_col.strftime("%d/%m/%Y"))
-        elif key == "Start time":
+        elif key == get("START_TIME_COLUMN_NAME", "Start time"):
             values_line.append(formatted_time_col if not full_day else "")
-        elif key == "Project":
+        elif key == get("PROJECT_COLUMN_NAME", "Project"):
             values_line.append(project_col)
-        elif key == "Activity":
+        elif key == get("ACTIVITY_COLUMN_NAME", "Activity"):
             values_line.append(activity_col)
-        elif key == "Details":
+        elif key == get("DETAILS_COLUMN_NAME", "Details"):
             values_line.append(details_col)
-        elif key == "Event id":
+        elif key == get("EVENT_ID_COLUMN_NAME", "Event id"):
             values_line.append(event_id_col)
-        elif key == "Link":
+        elif key == get("LINK_COLUMN_NAME", "Link"):
             values_line.append(link_col)
-        elif key == "Action":
+        elif key == get("ACTION_COLUMN_NAME", "Action"):
             values_line.append(action_col)
-        elif key == "Spent":
+        elif key == get("SPENT_COLUMN_NAME", "Spent"):
             values_line.append(formatted_duration_col if not full_day else "")
         else:
             values_line.append("")

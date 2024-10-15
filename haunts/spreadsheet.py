@@ -178,6 +178,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month, projects=[], al
             from_time=default_start_time or last_to_time,
         )
         last_to_time = event["next_slot"]
+        print(event)
 
         request = sheet.values().batchUpdate(
             spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),
@@ -197,9 +198,7 @@ def sync_events(config_dir, sheet, data, calendars, days, month, projects=[], al
                     # Quick link to the event on the calendar
                     {
                         "range": f"{month}!{headers[get('LINK_COLUMN_NAME', 'Link')]}{y + 2}",
-                        "values": [
-                            [f"=HYPERLINK(\"{event[get('LINK_COLUMN_NAME', 'Link')]}\";\"open\")"]
-                        ],
+                        "values": [[f"=HYPERLINK(\"{event['link']}\";\"open\")"]],
                     },
                 ],
             },

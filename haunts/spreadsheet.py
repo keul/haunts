@@ -173,7 +173,6 @@ def sync_events(config_dir, sheet, data, calendars, days, month, projects=[], al
             from_time=default_start_time or last_to_time,
         )
         last_to_time = event["next_slot"]
-        print(event)
 
         request = sheet.values().batchUpdate(
             spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"),

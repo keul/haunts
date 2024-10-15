@@ -4,7 +4,7 @@ History
 0.8.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Column names can be customized from .ini file
 
 
 0.8.0 (2024-10-08)

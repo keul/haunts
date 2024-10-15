@@ -130,7 +130,7 @@ An `example sheet
 
 The partition in multiple sheets is designed to keep every month in a separate sheet, but this is not strictly checked.
 
-Every sheet should contains following headers:
+Every sheet must contains following headers (you can customize names in the ``haunts.ini`` file, providing ``<UPPERCASE-DEFAULT>_COLUMN_NAME`` entries. As example: ``START_TIME_COLUMN_NAME=Begin at``):
 
 **Date**
   (date)

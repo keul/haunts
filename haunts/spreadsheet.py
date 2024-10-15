@@ -60,18 +60,12 @@ def sync_events(config_dir, sheet, data, calendars, days, month, projects=[], al
 
         if (
             # We want to filter by Action value and current action is not in the provided set
-            (
-                allowed_actions
-                and action not in allowed_actions
-                and "empty" not in allowed_actions
-            )
+            (allowed_actions and action not in allowed_actions and "empty" not in allowed_actions)
             or
             # …or action is not empty and we want to act on empty Action lines only
             (action and "empty" in allowed_actions)
         ):
-            LOGGER.debug(
-                f"Action {action} at line {y+1}, not in allowed actions {allowed_actions}"
-            )
+            LOGGER.debug(f"Action {action} at line {y+1}, not in allowed actions {allowed_actions}")
             continue
 
         current_date = get_col(row, headers_id["Date"])
@@ -128,7 +122,8 @@ def sync_events(config_dir, sheet, data, calendars, days, month, projects=[], al
                 event_id=get_col(row, headers_id[get("EVENT_ID_COLUMN_NAME", "Event id")]),
             )
             click.echo(
-                f'Deleted event "{get_col(row, headers_id[get("ACTIVITY_COLUMN_NAME", "Activity")])}" in date '
+                f"Deleted event "
+                f'"{get_col(row, headers_id[get("ACTIVITY_COLUMN_NAME", "Activity")])}" in date '
                 f'{date.strftime("%d/%m")} from calendar {project}'
             )
             request = sheet.values().batchClear(
@@ -191,7 +186,9 @@ def sync_events(config_dir, sheet, data, calendars, days, month, projects=[], al
                     },
                     # Save the event id, required to interact with the event in future
                     {
-                        "range": f"{month}!{headers[get('EVENT_ID_COLUMN_NAME', 'Event id')]}{y + 2}",
+                        "range": (
+                            f"{month}!{headers[get('EVENT_ID_COLUMN_NAME', 'Event id')]}" f"{y + 2}"
+                        ),
                         "values": [[event["id"]]],
                     },
                     # Quick link to the event on the calendar
@@ -239,9 +236,7 @@ def get_calendars(sheet, ignore_alias=False, use_read_col=False):
     """
     RANGE = f"{get('CONTROLLER_SHEET_NAME', 'config')}!A2:C"
     calendars = (
-        sheet.values()
-        .get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE)
-        .execute()
+        sheet.values().get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE).execute()
     )
     values = calendars.get("values", [])
     configured_calendars = {}
@@ -260,9 +255,7 @@ def get_calendars(sheet, ignore_alias=False, use_read_col=False):
                 # no linked_id
                 id, alias = cols
                 read_from = None
-        if ignore_alias and (
-            id in configured_calendars or read_from in configured_calendars
-        ):
+        if ignore_alias and (id in configured_calendars or read_from in configured_calendars):
             continue
         configured_calendars[alias] = read_from or id
     return configured_calendars
@@ -276,9 +269,7 @@ def get_calendar_col_values(sheet, month, col_name):
     col_of_interest = string.ascii_uppercase[col_of_interest]
     RANGE = f"{month}!{col_of_interest}2:{col_of_interest}"
     events = (
-        sheet.values()
-        .get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE)
-        .execute()
+        sheet.values().get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE).execute()
     )
     values = events.get("values", [])
     return [e[0] for e in values if e]
@@ -291,9 +282,7 @@ def get_calendars_names(sheet, flat=True):
     """
     RANGE = f"{get('CONTROLLER_SHEET_NAME', 'config')}!A2:C"
     calendars = (
-        sheet.values()
-        .get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE)
-        .execute()
+        sheet.values().get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE).execute()
     )
     values = calendars.get("values", [])
     names = {}
@@ -306,9 +295,7 @@ def get_calendars_names(sheet, flat=True):
             linked_id = None
         if names.get(linked_id) or (names.get(id) and not linked_id):
             continue
-        names[linked_id or id] = (
-            alias if flat else {"alias": alias, "is_linked": bool(linked_id)}
-        )
+        names[linked_id or id] = alias if flat else {"alias": alias, "is_linked": bool(linked_id)}
     return names
 
 
@@ -316,9 +303,7 @@ def get_first_empty_line(sheet, month):
     """Get the first empty line in a month."""
     RANGE = f"{month}!A1:A"
     lines = (
-        sheet.values()
-        .get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE)
-        .execute()
+        sheet.values().get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE).execute()
     )
     values = lines.get("values", [])
     return len(values) + 1
@@ -438,9 +423,7 @@ def sync_report(config_dir, month, days=[], projects=[], allowed_actions=[]):
             .execute()
         )
     except HttpError as err:
-        click.echo(
-            Back.RED + f'Sheet "{month}" not found or not accessible.' + Style.RESET_ALL
-        )
+        click.echo(Back.RED + f'Sheet "{month}" not found or not accessible.' + Style.RESET_ALL)
         click.echo(err.error_details)
         sys.exit(1)
 

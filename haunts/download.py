@@ -27,10 +27,7 @@ def filter_my_events(events):
     if USER_EMAIL is None:
         raise KeyError("USER_EMAIL not set in configuration")
     for event in events:
-        if (
-            event.get("creator", {}).get("email") == USER_EMAIL
-            and event.get("attendees", []) == []
-        ):
+        if event.get("creator", {}).get("email") == USER_EMAIL and event.get("attendees", []) == []:
             yield event
         elif USER_EMAIL in [
             attendee.get("email")
@@ -44,9 +41,7 @@ def get_events_at(events_service, calendar_id, date):
     """Get all events from a calendar in a specific date."""
     start_datetime = datetime.combine(date, datetime.min.time())
     end_datetime = (
-        datetime.combine(date, datetime.min.time())
-        + timedelta(days=1)
-        - timedelta(seconds=1)
+        datetime.combine(date, datetime.min.time()) + timedelta(days=1) - timedelta(seconds=1)
     )
     tz_obj = tz.gettz(get("TIMEZONE", "Etc/GMT"))
     start_datetime = start_datetime.replace(tzinfo=tz_obj)
@@ -69,36 +64,26 @@ def extract_events(config_dir, sheet, day):
 
     Extract events from Google Calendar and copy them to proper Google Sheet.
     """
-    calendar_credentials = get_credentials(
-        config_dir, CALENDAR_SCOPES, "calendars-token.json"
-    )
-    spreadsheeet_credentials = get_credentials(
-        config_dir, SPREADSHEET_SCOPES, "sheets-token.json"
-    )
+    calendar_credentials = get_credentials(config_dir, CALENDAR_SCOPES, "calendars-token.json")
+    spreadsheeet_credentials = get_credentials(config_dir, SPREADSHEET_SCOPES, "sheets-token.json")
     calendar_service = build("calendar", "v3", credentials=calendar_credentials)
     spreadsheet_service = build("sheets", "v4", credentials=spreadsheeet_credentials)
 
-    date_to_check = datetime.strptime(
-        day, "%Y-%m-%d"
-    ).date()  # Replace with the desired date
+    date_to_check = datetime.strptime(day, "%Y-%m-%d").date()  # Replace with the desired date
 
     events_service = calendar_service.events()
     sheet_service = spreadsheet_service.spreadsheets()
 
     click.echo(f"Checking your calendars at {day}…")
 
-    configured_calendars = get_calendars(
-        sheet_service, ignore_alias=True, use_read_col=True
-    )
+    configured_calendars = get_calendars(sheet_service, ignore_alias=True, use_read_col=True)
     configured_calendars["???"] = get("USER_EMAIL")
     all_events = []
     # Get "my events" from all configured calendars in the selected date
     already_added_events = set()
     for calendar_id in configured_calendars.values():
         events = get_events_at(events_service, calendar_id, date_to_check)
-        new_events = [
-            e for e in filter_my_events(events) if e["id"] not in already_added_events
-        ]
+        new_events = [e for e in filter_my_events(events) if e["id"] not in already_added_events]
         already_added_events.update([e["id"] for e in new_events])
         all_events.extend(new_events)
 
@@ -133,7 +118,7 @@ def extract_events(config_dir, sheet, day):
             click.echo(
                 Back.YELLOW
                 + Fore.BLACK
-                + (f"Event {event_summary} already present in the sheet. Skipping…")
+                + (f"Event {event_summary} ({event_id}) already present in the sheet. Skipping…")
                 + Style.RESET_ALL
             )
             continue
@@ -143,7 +128,7 @@ def extract_events(config_dir, sheet, day):
                 Back.YELLOW
                 + Fore.BLACK
                 + (
-                    f"A link to event {event_summary} already present in the sheet ({event_link}). "
+                    f"A link to event {event_summary} ({event_link}) already present in the sheet. "
                     f"Skipping…"
                 )
                 + Style.RESET_ALL

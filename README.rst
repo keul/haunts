@@ -35,7 +35,7 @@ To use Google Calendar and Google Spreasheet APIs you must generate a Google API
 * Go to https://console.cloud.google.com/home/dashboard and create a Project called *haunts*.
   
   * In the search bar, search *Credentials APIs and services* and enable it.
-  * Click on *Create Credentials*, set *Desktop* as the *type* and save the json file as ``~/.haunts/credentials.json``.
+  * Click on *Create Credentials > OAuth client ID*, set *Desktop* as the *type* and save the json file as ``~/.haunts/credentials.json``.
   * In the search bar, search *Google Sheets API* and *Google Calendar API* and activate them.
   
 * Run ``haunts`` normally.

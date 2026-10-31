@@ -129,6 +129,8 @@ def normalize_event(event):
         "htmlLink": event_marker(event),
         "calendar_id": proton_calendar_key(event["calendar_id"]),
         "proton_calendar_id": event["calendar_id"],
+        "uid": event.get("uid", ""),
+        "organizer": event.get("organizer", ""),
         "source": "Proton",
     }
 

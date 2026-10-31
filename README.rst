@@ -221,8 +221,13 @@ When enabled:
 
 * Events from Proton calendars referenced in the config sheet are added to the related project.
   Like any other ``read_from`` calendar, ``Event id`` and ``Action`` are left empty, so a later ``sync`` will copy them to the Google Calendar of the project
-* Events from any other Proton calendar are added with the ``???`` project,
-  apart from holidays calendars (unless explicitly referenced in the config sheet)
+* Events from any other Proton calendar (like invitations you accepted) are added with the project of their organizer,
+  when the organizer is a Google calendar listed in the config sheet (``id`` or ``read_from`` column, the latter taking precedence).
+  This happens when a Google calendar of your organization invites you.
+  Otherwise they are added with the ``???`` project.
+  Holidays calendars are ignored (unless explicitly referenced in the config sheet)
+* When reading from both Google and Proton, Proton events that are copies of an event already read from Google
+  (same iCalendar UID, like invitations sent by Google) are skipped
 * Cancelled events are ignored
 * The ``Link`` column is filled with a ``proton:<calendar id>/<event id>`` reference, used to not add the same event twice
 * If proton-cli is not installed or you are not logged in, the command fails without writing anything.

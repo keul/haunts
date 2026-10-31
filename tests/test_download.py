@@ -3,7 +3,7 @@
 import unittest
 from unittest import mock
 
-from haunts import download
+from haunts import download, spreadsheet
 
 
 def config(**options):
@@ -61,6 +61,32 @@ class TestGetReadServices(unittest.TestCase):
     def test_skip_everything(self):
         with self.assertRaisesRegex(download.ConfigurationError, "No calendar service"):
             self.services(skip=["google", "proton"], PROTON_CLI="proton")
+
+
+class TestGetCalendarsById(unittest.TestCase):
+    def test_ids_and_read_from(self):
+        sheet = mock.MagicMock()
+        sheet.values().get().execute.return_value = {
+            "values": [
+                ["team@group", "Team"],
+                ["accounting@group", "Customer meetings", "team@group"],
+                ["accounting@group", "Customer meetings alias"],
+                ["other@group", "Other", ""],
+                ["proton@group", "Proton project", "proton:cal1"],
+                ["incomplete"],
+            ]
+        }
+        with mock.patch("haunts.spreadsheet.get", config(CONTROLLER_SHEET_DOCUMENT_ID="x")):
+            self.assertEqual(
+                spreadsheet.get_calendars_by_id(sheet),
+                {
+                    "team@group": "Customer meetings",
+                    "accounting@group": "Customer meetings",
+                    "other@group": "Other",
+                    "proton@group": "Proton project",
+                    "proton:cal1": "Proton project",
+                },
+            )
 
 
 if __name__ == "__main__":

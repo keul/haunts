@@ -63,6 +63,8 @@ class TestProton(unittest.TestCase):
         self.assertEqual(event["calendar_id"], "proton:cal1")
         self.assertEqual(event["htmlLink"], "proton:cal1/ev1")
         self.assertEqual(event["source"], "Proton")
+        self.assertEqual(event["uid"], "")
+        self.assertEqual(event["organizer"], "")
 
     def test_normalize_utc_event(self):
         event = proton.normalize_event(
@@ -189,6 +191,48 @@ class TestGetProtonEvents(unittest.TestCase):
         ]
         events = download.get_proton_events({"proton:holidays_cal"}, date(2026, 10, 31), set())
         self.assertEqual([e["calendar_id"] for e in events], ["proton:holidays_cal"])
+
+    @mock.patch("haunts.proton.get_events_at")
+    def test_project_from_organizer(self, get_events_at):
+        get_events_at.return_value = [
+            proton.normalize_event(
+                proton_event(id="ev1", organizer="c_123@group.calendar.google.com")
+            ),
+            proton.normalize_event(proton_event(id="ev2", organizer="customer@example.com")),
+            # Mapped calendars win over organizer
+            proton.normalize_event(
+                proton_event(
+                    id="ev3", calendar_id="mapped", organizer="c_123@group.calendar.google.com"
+                )
+            ),
+        ]
+        events = download.get_proton_events(
+            {"proton:mapped"},
+            date(2026, 10, 31),
+            set(),
+            organizer_projects={"c_123@group.calendar.google.com": "ESA"},
+        )
+        self.assertEqual(
+            [(e["id"], e["calendar_id"], e.get("project")) for e in events],
+            [
+                ("ev1", proton.PROTON_CATCH_ALL, "ESA"),
+                ("ev2", proton.PROTON_CATCH_ALL, None),
+                ("ev3", "proton:mapped", None),
+            ],
+        )
+        self.assertEqual(events[0]["source"], "Proton, by organizer")
+
+    @mock.patch("haunts.proton.get_events_at")
+    def test_google_duplicates(self, get_events_at):
+        get_events_at.return_value = [
+            proton.normalize_event(proton_event(id="ev1", uid="abc@google.com")),
+            proton.normalize_event(proton_event(id="ev2", uid="def@proton.me")),
+            proton.normalize_event(proton_event(id="ev3")),
+        ]
+        events = download.get_proton_events(
+            set(), date(2026, 10, 31), set(), google_uids={"abc@google.com"}
+        )
+        self.assertEqual([e["id"] for e in events], ["ev2", "ev3"])
 
     @mock.patch("haunts.proton.get_events_at")
     def test_catch_all_and_duplicates(self, get_events_at):

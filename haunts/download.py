@@ -10,6 +10,7 @@ from . import proton
 from .spreadsheet import (
     append_line,
     get_calendars_names,
+    get_calendars_by_id,
     get_calendars,
     get_calendar_col_values,
 )
@@ -69,16 +70,30 @@ def get_events_at(events_service, calendar_id, date):
     return [{**e, "calendar_id": calendar_id, "source": "Google"} for e in events]
 
 
-def get_proton_events(proton_calendars, date, already_added_events):
+def get_proton_events(
+    proton_calendars, date, already_added_events, organizer_projects=None, google_uids=None
+):
     """Get events from Proton Calendar in a specific date.
 
-    Events in a calendar not configured in the config sheet are assigned to the catch-all
-    calendar, apart from calendars of ignored kinds (like holidays).
+    Events in a calendar not configured in the config sheet are assigned to the project of
+    their organizer, when the organizer is a calendar in the config sheet (like Google
+    calendars inviting you), otherwise to the catch-all calendar.
+    Calendars of ignored kinds (like holidays) are skipped.
+
+    Events already read from Google Calendar (same iCalendar UID) are skipped.
     """
+    organizer_projects = organizer_projects or {}
+    google_uids = google_uids or set()
     events = []
     ignored_calendars = None
     for event in proton.get_events_at(date):
         if event["htmlLink"] in already_added_events:
+            continue
+        if event["uid"] and event["uid"] in google_uids:
+            click.echo(
+                f"Event {event['summary']} (from Proton) is a duplicate of a Google event. "
+                "Skipping…"
+            )
             continue
         if event["calendar_id"] not in proton_calendars:
             if ignored_calendars is None:
@@ -86,6 +101,10 @@ def get_proton_events(proton_calendars, date, already_added_events):
             if event["proton_calendar_id"] in ignored_calendars:
                 continue
             event["calendar_id"] = proton.PROTON_CATCH_ALL
+            project = organizer_projects.get(event["organizer"])
+            if project:
+                event["project"] = project
+                event["source"] = "Proton, by organizer"
         already_added_events.add(event["htmlLink"])
         events.append(event)
     return events
@@ -168,7 +187,15 @@ def extract_events(config_dir, sheet, day, services=(GOOGLE,)):
     if PROTON in services:
         click.echo("Checking your Proton calendars…")
         # Errors are propagated: nothing has been written on the sheet yet
-        all_events.extend(get_proton_events(proton_calendars, date_to_check, set()))
+        all_events.extend(
+            get_proton_events(
+                proton_calendars,
+                date_to_check,
+                set(),
+                organizer_projects=get_calendars_by_id(sheet_service),
+                google_uids={e["iCalUID"] for e in all_events if e.get("iCalUID")},
+            )
+        )
 
     # Sort events by start time
     all_events.sort(key=lambda x: x["start"].get("dateTime", x["start"].get("date")))
@@ -193,7 +220,7 @@ def extract_events(config_dir, sheet, day, services=(GOOGLE,)):
         event_summary = event.get("summary", "No summary")
         start = event["start"].get("dateTime", event["start"].get("date"))
         end = event["end"].get("dateTime", event["end"].get("date"))
-        project = calendar_names[event["calendar_id"]]["alias"]
+        project = event.get("project") or calendar_names[event["calendar_id"]]["alias"]
         is_linked = calendar_names[event["calendar_id"]]["is_linked"]
 
         start_date = datetime.fromisoformat(start).date()

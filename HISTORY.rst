@@ -6,7 +6,9 @@ History
 
 - Column names can be customized from .ini file
 - ``--execute read`` can also read events from Proton Calendar, through `proton-cli <https://proton-cli.lerchster.dev/>`_.
-  Enable it with the ``PROTON_CLI`` option, skip it with ``--skip-proton``
+  Enable it with the ``PROTON_CLI`` option
+- New ``READ_FROM_SERVICES`` option and ``--skip`` parameter, to choose calendar services
+  used by ``--execute read``
 
 
 0.8.0 (2024-10-08)

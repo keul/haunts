@@ -16,6 +16,15 @@ from .spreadsheet import (
 from .spreadsheet import SCOPES as SPREADSHEET_SCOPES
 from .calendars import SCOPES as CALENDAR_SCOPES
 
+GOOGLE = "google"
+PROTON = "proton"
+SERVICES = (GOOGLE, PROTON)
+SERVICE_NAMES = {GOOGLE: "Google", PROTON: "Proton"}
+
+
+class ConfigurationError(Exception):
+    """Raised when the configuration does not allow to read events."""
+
 
 def filter_my_events(events):
     """
@@ -82,51 +91,81 @@ def get_proton_events(proton_calendars, date, already_added_events):
     return events
 
 
-def extract_events(config_dir, sheet, day, use_proton=True):
+def get_read_services(skip=()):
+    """Calendar services to read events from.
+
+    Services are taken from READ_FROM_SERVICES configuration option (default: all of them),
+    minus the ones in skip.
+    Proton is used only when configured (see PROTON_CLI): if READ_FROM_SERVICES is not set it is
+    silently ignored, otherwise an error is raised.
+    """
+    raw = get("READ_FROM_SERVICES", "").strip()
+    services = [s.strip().lower() for s in (raw or ",".join(SERVICES)).split(",") if s.strip()]
+    unknown = [s for s in services if s not in SERVICES]
+    if unknown:
+        raise ConfigurationError(
+            f"Unknown service(s) in READ_FROM_SERVICES: {', '.join(unknown)}. "
+            f"Allowed values are: {', '.join(SERVICES)}"
+        )
+    services = [s for s in SERVICES if s in services and s not in skip]
+    if PROTON in services and not proton.is_enabled():
+        if raw:
+            raise ConfigurationError(
+                "READ_FROM_SERVICES includes proton, but PROTON_CLI is not set in haunts.ini"
+            )
+        services.remove(PROTON)
+    if not services:
+        raise ConfigurationError("No calendar service left to read events from")
+    return services
+
+
+def extract_events(config_dir, sheet, day, services=(GOOGLE,)):
     """Public module entry point.
 
-    Extract events from Google Calendar (and Proton Calendar, if enabled)
+    Extract events from calendar services (Google Calendar, Proton Calendar)
     and copy them to proper Google Sheet.
     """
-    calendar_credentials = get_credentials(config_dir, CALENDAR_SCOPES, "calendars-token.json")
     spreadsheeet_credentials = get_credentials(config_dir, SPREADSHEET_SCOPES, "sheets-token.json")
-    calendar_service = build("calendar", "v3", credentials=calendar_credentials)
     spreadsheet_service = build("sheets", "v4", credentials=spreadsheeet_credentials)
+    sheet_service = spreadsheet_service.spreadsheets()
 
     date_to_check = datetime.strptime(day, "%Y-%m-%d").date()  # Replace with the desired date
 
-    events_service = calendar_service.events()
-    sheet_service = spreadsheet_service.spreadsheets()
-
-    click.echo(f"Checking your calendars at {day}…")
+    click.echo(
+        f"Checking your calendars at {day} "
+        f"(reading from: {', '.join(SERVICE_NAMES[s] for s in services)})…"
+    )
 
     configured_calendars = get_calendars(sheet_service, ignore_alias=True, use_read_col=True)
-    configured_calendars["???"] = get("USER_EMAIL")
     proton_calendars = {c for c in configured_calendars.values() if proton.is_proton_calendar(c)}
-    proton_enabled = proton.is_enabled()
-    if proton_calendars and not proton_enabled:
+    if proton_calendars and PROTON not in services:
         click.echo(
             Back.YELLOW
             + Fore.BLACK
-            + "Proton calendars found in the config sheet, but PROTON_CLI is not set "
-            + "in haunts.ini: they will be ignored"
+            + "Proton calendars found in the config sheet are ignored, "
+            + "as Proton Calendar is not read"
             + Style.RESET_ALL
         )
-    elif proton_enabled and not use_proton:
-        click.echo("Proton Calendar is disabled by --skip-proton")
 
     all_events = []
-    # Get "my events" from all configured calendars in the selected date
-    already_added_events = set()
-    for calendar_id in configured_calendars.values():
-        if proton.is_proton_calendar(calendar_id):
-            continue
-        events = get_events_at(events_service, calendar_id, date_to_check)
-        new_events = [e for e in filter_my_events(events) if e["id"] not in already_added_events]
-        already_added_events.update([e["id"] for e in new_events])
-        all_events.extend(new_events)
+    if GOOGLE in services:
+        calendar_credentials = get_credentials(config_dir, CALENDAR_SCOPES, "calendars-token.json")
+        events_service = build("calendar", "v3", credentials=calendar_credentials).events()
+        google_calendars = [
+            c for c in configured_calendars.values() if not proton.is_proton_calendar(c)
+        ]
+        google_calendars.append(get("USER_EMAIL"))
+        # Get "my events" from all configured calendars in the selected date
+        already_added_events = set()
+        for calendar_id in google_calendars:
+            events = get_events_at(events_service, calendar_id, date_to_check)
+            new_events = [
+                e for e in filter_my_events(events) if e["id"] not in already_added_events
+            ]
+            already_added_events.update([e["id"] for e in new_events])
+            all_events.extend(new_events)
 
-    if proton_enabled and use_proton:
+    if PROTON in services:
         click.echo("Checking your Proton calendars…")
         # Errors are propagated: nothing has been written on the sheet yet
         all_events.extend(get_proton_events(proton_calendars, date_to_check, set()))
@@ -137,7 +176,8 @@ def extract_events(config_dir, sheet, day, use_proton=True):
     # Get calendar configurations
     calendar_names = get_calendars_names(sheet_service, flat=False)
     # Forcibly add the user's calendar to the list
-    calendar_names[get("USER_EMAIL")] = {"alias": "???", "is_linked": False}
+    if GOOGLE in services:
+        calendar_names[get("USER_EMAIL")] = {"alias": "???", "is_linked": False}
     # Proton events are always copied to Google Calendar later by `sync`, like linked calendars
     calendar_names[proton.PROTON_CATCH_ALL] = {"alias": "???", "is_linked": True}
 

@@ -226,13 +226,31 @@ When enabled:
 * Cancelled events are ignored
 * The ``Link`` column is filled with a ``proton:<calendar id>/<event id>`` reference, used to not add the same event twice
 * If proton-cli is not installed or you are not logged in, the command fails without writing anything.
-  Use ``--skip-proton`` to read from Google Calendar only:
+  Use ``--skip proton`` to read from Google Calendar only (see below)
+
+Known limitations: proton-cli does not expose your response to invitations, so events you declined are not filtered out (as happens for Google Calendar).
+
+Choosing services to read from
+------------------------------
+
+By default ``--execute read`` reads from both Google Calendar and Proton Calendar (when ``PROTON_CLI`` is set).
+Use the ``READ_FROM_SERVICES`` option in ``haunts.ini`` to choose services to read from, as a comma separated list
+of ``google`` and ``proton``. For example, to read from Proton Calendar only:
+
+.. code-block:: ini
+
+   READ_FROM_SERVICES=proton
+
+When ``READ_FROM_SERVICES`` explicitly includes ``proton``, ``PROTON_CLI`` is required.
+
+Services can also be excluded for a single run with ``--skip`` (can be provided multiple times):
 
 .. code-block:: bash
 
-   haunts --execute read --skip-proton May
+   haunts --execute read --skip proton May
+   haunts --execute read --skip google May
 
-Known limitations: proton-cli does not expose your response to invitations, so events you declined are not filtered out (as happens for Google Calendar).
+Note that Google Sheets and Google Calendar credentials are still needed: the sheet is always on Google, and ``sync`` writes events on Google Calendar.
 
 How events will be filled
 -------------------------

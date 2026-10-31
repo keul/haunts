@@ -15,7 +15,7 @@ from .calendars import init as init_calendars
 from .spreadsheet import sync_report
 from .report import report
 from . import actions
-from .download import extract_events
+from .download import ConfigurationError, extract_events, get_read_services
 from .proton import ProtonError
 
 
@@ -79,14 +79,15 @@ from .proton import ProtonError
     help='filter report glob search inside "Activity" columns. ',
 )
 @click.option(
-    "--skip-proton",
+    "--skip",
+    "-s",
+    type=click.Choice(["google", "proton"], case_sensitive=False),
+    multiple=True,
     help=(
-        "do not read events from Proton Calendar, even if enabled in configuration. "
-        'Used only with "--execute read".'
+        "do not read events from this calendar service, even if enabled in configuration. "
+        'Used only with "--execute read". Can be provided multiple times.'
     ),
-    is_flag=True,
-    show_default=True,
-    default=False,
+    default=[],
 )
 @click.option(
     "--version",
@@ -104,7 +105,7 @@ def main(
     project=[],
     overtime=False,
     filter=None,
-    skip_proton=False,
+    skip=[],
     show_version=False,
 ):
     """
@@ -181,17 +182,21 @@ def main(
         )
     elif execute == "read":
         try:
+            services = get_read_services(skip=[s.lower() for s in skip])
             extract_events(
                 config_dir,
                 sheet,
                 day=day[0] if day else datetime.date.today().strftime("%Y-%m-%d"),
-                use_proton=not skip_proton,
+                services=services,
             )
+        except ConfigurationError as err:
+            click.echo(Fore.RED + str(err) + Style.RESET_ALL)
+            sys.exit(1)
         except ProtonError as err:
             click.echo(
                 Fore.RED
                 + f"Cannot read Proton Calendar: {err}\n"
-                + "Use --skip-proton to read Google Calendar only."
+                + "Use --skip proton to not read from Proton Calendar."
                 + Style.RESET_ALL
             )
             sys.exit(1)

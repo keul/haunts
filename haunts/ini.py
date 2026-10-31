@@ -30,6 +30,15 @@ CONTROLLER_SHEET_DOCUMENT_ID=<Google Sheet Document Id here>
 # Default is GMT
 # TIMEZONE=Europe/Rom
 
+# Proton Calendar support for `--execute read` (optional).
+# Requires proton-cli (https://proton-cli.lerchster.dev/) installed and logged in
+# (`proton account login`). Set to the proton-cli executable name or path to enable it.
+# Default is empty: Proton Calendar is not used
+# PROTON_CLI=proton
+
+# proton-cli profile to use (optional)
+# PROTON_PROFILE=
+
 # Columns name
 # PROJECT_COLUMN_NAME=Project
 # SPENT_COLUMN_NAME=Spent

@@ -6,6 +6,7 @@ from colorama import Back, Fore, Style
 
 from .ini import get
 from .credentials import get_credentials
+from . import proton
 from .spreadsheet import (
     append_line,
     get_calendars_names,
@@ -56,13 +57,36 @@ def get_events_at(events_service, calendar_id, date):
     ).execute()
     events = events_result.get("items", [])
     # Enrich events with calendar_id
-    return [{**e, "calendar_id": calendar_id} for e in events]
+    return [{**e, "calendar_id": calendar_id, "source": "Google"} for e in events]
 
 
-def extract_events(config_dir, sheet, day):
+def get_proton_events(proton_calendars, date, already_added_events):
+    """Get events from Proton Calendar in a specific date.
+
+    Events in a calendar not configured in the config sheet are assigned to the catch-all
+    calendar, apart from calendars of ignored kinds (like holidays).
+    """
+    events = []
+    ignored_calendars = None
+    for event in proton.get_events_at(date):
+        if event["htmlLink"] in already_added_events:
+            continue
+        if event["calendar_id"] not in proton_calendars:
+            if ignored_calendars is None:
+                ignored_calendars = proton.get_calendar_ids(proton.IGNORED_CALENDAR_KINDS)
+            if event["proton_calendar_id"] in ignored_calendars:
+                continue
+            event["calendar_id"] = proton.PROTON_CATCH_ALL
+        already_added_events.add(event["htmlLink"])
+        events.append(event)
+    return events
+
+
+def extract_events(config_dir, sheet, day, use_proton=True):
     """Public module entry point.
 
-    Extract events from Google Calendar and copy them to proper Google Sheet.
+    Extract events from Google Calendar (and Proton Calendar, if enabled)
+    and copy them to proper Google Sheet.
     """
     calendar_credentials = get_credentials(config_dir, CALENDAR_SCOPES, "calendars-token.json")
     spreadsheeet_credentials = get_credentials(config_dir, SPREADSHEET_SCOPES, "sheets-token.json")
@@ -78,14 +102,34 @@ def extract_events(config_dir, sheet, day):
 
     configured_calendars = get_calendars(sheet_service, ignore_alias=True, use_read_col=True)
     configured_calendars["???"] = get("USER_EMAIL")
+    proton_calendars = {c for c in configured_calendars.values() if proton.is_proton_calendar(c)}
+    proton_enabled = proton.is_enabled()
+    if proton_calendars and not proton_enabled:
+        click.echo(
+            Back.YELLOW
+            + Fore.BLACK
+            + "Proton calendars found in the config sheet, but PROTON_CLI is not set "
+            + "in haunts.ini: they will be ignored"
+            + Style.RESET_ALL
+        )
+    elif proton_enabled and not use_proton:
+        click.echo("Proton Calendar is disabled by --skip-proton")
+
     all_events = []
     # Get "my events" from all configured calendars in the selected date
     already_added_events = set()
     for calendar_id in configured_calendars.values():
+        if proton.is_proton_calendar(calendar_id):
+            continue
         events = get_events_at(events_service, calendar_id, date_to_check)
         new_events = [e for e in filter_my_events(events) if e["id"] not in already_added_events]
         already_added_events.update([e["id"] for e in new_events])
         all_events.extend(new_events)
+
+    if proton_enabled and use_proton:
+        click.echo("Checking your Proton calendars…")
+        # Errors are propagated: nothing has been written on the sheet yet
+        all_events.extend(get_proton_events(proton_calendars, date_to_check, set()))
 
     # Sort events by start time
     all_events.sort(key=lambda x: x["start"].get("dateTime", x["start"].get("date")))
@@ -94,6 +138,8 @@ def extract_events(config_dir, sheet, day):
     calendar_names = get_calendars_names(sheet_service, flat=False)
     # Forcibly add the user's calendar to the list
     calendar_names[get("USER_EMAIL")] = {"alias": "???", "is_linked": False}
+    # Proton events are always copied to Google Calendar later by `sync`, like linked calendars
+    calendar_names[proton.PROTON_CATCH_ALL] = {"alias": "???", "is_linked": True}
 
     # Get a list of all events ids already present in the sheet
     # This to prevent adding the same event multiple times
@@ -118,7 +164,10 @@ def extract_events(config_dir, sheet, day):
             click.echo(
                 Back.YELLOW
                 + Fore.BLACK
-                + (f"Event {event_summary} ({event_id}) already present in the sheet. Skipping…")
+                + (
+                    f"Event {event_summary} ({event_id}, from {event.get('source', 'Google')}) "
+                    f"already present in the sheet. Skipping…"
+                )
                 + Style.RESET_ALL
             )
             continue
@@ -128,14 +177,16 @@ def extract_events(config_dir, sheet, day):
                 Back.YELLOW
                 + Fore.BLACK
                 + (
-                    f"A link to event {event_summary} ({event_link}) already present in the sheet. "
+                    f"A link to event {event_summary} "
+                    f"({event_link}, from {event.get('source', 'Google')}) "
+                    f"already present in the sheet. "
                     f"Skipping…"
                 )
                 + Style.RESET_ALL
             )
             continue
         click.echo(
-            f"Adding new event {event_summary} ({project}) "
+            f"Adding new event {event_summary} ({project} - from {event.get('source', 'Google')}) "
             f"{f'at {start_time}' if duration else 'full day'} to selected sheet"
         )
         append_line(

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 """Console script for haunts."""
+
 import datetime
 import os
 import sys
@@ -15,6 +16,7 @@ from .spreadsheet import sync_report
 from .report import report
 from . import actions
 from .download import extract_events
+from .proton import ProtonError
 
 
 @click.command()
@@ -77,6 +79,16 @@ from .download import extract_events
     help='filter report glob search inside "Activity" columns. ',
 )
 @click.option(
+    "--skip-proton",
+    help=(
+        "do not read events from Proton Calendar, even if enabled in configuration. "
+        'Used only with "--execute read".'
+    ),
+    is_flag=True,
+    show_default=True,
+    default=False,
+)
+@click.option(
     "--version",
     "-v",
     "show_version",
@@ -92,6 +104,7 @@ def main(
     project=[],
     overtime=False,
     filter=None,
+    skip_proton=False,
     show_version=False,
 ):
     """
@@ -116,9 +129,7 @@ def main(
 
     config = Path(os.path.expanduser(f"{config_dir.resolve()}/haunts.ini"))
     if not run_configuration and not config_dir.is_dir():
-        click.echo(
-            f"Configuation file at {config.resolve()} not found. Use --config to create it."
-        )
+        click.echo(f"Configuation file at {config.resolve()} not found. Use --config to create it.")
         sys.exit(1)
     if run_configuration and not config_dir.is_dir():
         click.echo(f"Creating config directory at {config_dir.resolve()}")
@@ -126,9 +137,7 @@ def main(
         click.echo("…created")
         if not config.is_file():
             create_default(config)
-            click.echo(
-                f"Manage you settings at {config.resolve()} before running haunts again."
-            )
+            click.echo(f"Manage you settings at {config.resolve()} before running haunts again.")
             sys.exit(1)
 
     if not run_configuration and not sheet:
@@ -171,11 +180,21 @@ def main(
             filter=filter,
         )
     elif execute == "read":
-        extract_events(
-            config_dir,
-            sheet,
-            day=day[0] if day else datetime.date.today().strftime("%Y-%m-%d"),
-        )
+        try:
+            extract_events(
+                config_dir,
+                sheet,
+                day=day[0] if day else datetime.date.today().strftime("%Y-%m-%d"),
+                use_proton=not skip_proton,
+            )
+        except ProtonError as err:
+            click.echo(
+                Fore.RED
+                + f"Cannot read Proton Calendar: {err}\n"
+                + "Use --skip-proton to read Google Calendar only."
+                + Style.RESET_ALL
+            )
+            sys.exit(1)
     return 0
 
 

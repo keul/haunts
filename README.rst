@@ -198,7 +198,41 @@ The spreadsheet must also contains a *configuration sheet* (default name is ``co
   Read events from this (optional) calendar id instead of the canonical one (the one defined in the ``id`` column).
   This makes possible to *read* events from a calendar, but store them in another ones.
 
+  It can also reference a Proton calendar, using the ``proton:<calendar id>`` format
+  (see "Proton Calendar support" below).
+
 Values in the ``name`` column are valid values for the ``Project`` column introduced above.
+
+Proton Calendar support
+-----------------------
+
+``--execute read`` can also read events from `Proton Calendar <https://proton.me/calendar>`_, in addition to Google Calendar.
+
+Proton provides no public API (calendar data is end-to-end encrypted), so *haunts* relies on
+`proton-cli <https://proton-cli.lerchster.dev/>`_, an unofficial command line client:
+
+* `Install proton-cli <https://proton-cli.lerchster.dev/install/>`_ and log in once with ``proton account login``
+* Enable Proton support in ``haunts.ini`` by setting the ``PROTON_CLI`` option to the proton-cli executable name or path
+  (``PROTON_CLI=proton``). Optionally, set ``PROTON_PROFILE`` to use a specific proton-cli profile
+* In the config sheet, put ``proton:<calendar id>`` in the ``read_from`` column of the project that should collect events from a Proton calendar.
+  Get calendar ids by running ``proton calendar settings calendars list --output json``
+
+When enabled:
+
+* Events from Proton calendars referenced in the config sheet are added to the related project.
+  Like any other ``read_from`` calendar, ``Event id`` and ``Action`` are left empty, so a later ``sync`` will copy them to the Google Calendar of the project
+* Events from any other Proton calendar are added with the ``???`` project,
+  apart from holidays calendars (unless explicitly referenced in the config sheet)
+* Cancelled events are ignored
+* The ``Link`` column is filled with a ``proton:<calendar id>/<event id>`` reference, used to not add the same event twice
+* If proton-cli is not installed or you are not logged in, the command fails without writing anything.
+  Use ``--skip-proton`` to read from Google Calendar only:
+
+.. code-block:: bash
+
+   haunts --execute read --skip-proton May
+
+Known limitations: proton-cli does not expose your response to invitations, so events you declined are not filtered out (as happens for Google Calendar).
 
 How events will be filled
 -------------------------

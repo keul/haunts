@@ -133,6 +133,10 @@ def get_read_services(skip=()):
                 "READ_FROM_SERVICES includes proton, but PROTON_CLI is not set in haunts.ini"
             )
         services.remove(PROTON)
+    if PROTON in services and not proton.get_my_emails():
+        raise ConfigurationError(
+            "Set PROTON_EMAIL (or USER_EMAIL) in haunts.ini to read from Proton Calendar"
+        )
     if not services:
         raise ConfigurationError("No calendar service left to read events from")
     return services
@@ -154,6 +158,12 @@ def extract_events(config_dir, sheet, day, services=(GOOGLE,)):
         f"Checking your calendars at {day} "
         f"(reading from: {', '.join(SERVICE_NAMES[s] for s in services)})…"
     )
+
+    if PROTON in services:
+        # Fail early if proton-cli is not available, warn if it's too old
+        warning = proton.check_version()
+        if warning:
+            click.echo(Back.YELLOW + Fore.BLACK + warning + Style.RESET_ALL)
 
     configured_calendars = get_calendars(sheet_service, ignore_alias=True, use_read_col=True)
     proton_calendars = {c for c in configured_calendars.values() if proton.is_proton_calendar(c)}

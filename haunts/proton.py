@@ -7,6 +7,7 @@ command line client that handles login and decryption, and parses its JSON outpu
 
 import json
 import os
+import re
 import shutil
 import subprocess
 
@@ -20,6 +21,10 @@ PROTON_PREFIX = "proton:"
 # Key used for Proton events not found in any calendar configured in the config sheet
 PROTON_CATCH_ALL = f"{PROTON_PREFIX}*"
 
+# Minimum proton-cli version supported (attendees with their answer)
+MIN_VERSION = "5.4.0"
+# Answers to invitations of events you are attending
+MY_ANSWERS = {"accepted", "pending"}
 # Kinds of calendars not read by the catch-all, unless explicitly configured in the config sheet
 IGNORED_CALENDAR_KINDS = {"holidays"}
 
@@ -43,6 +48,36 @@ class ProtonError(Exception):
 def is_enabled():
     """Proton support is enabled when PROTON_CLI is set in the configuration."""
     return bool(get("PROTON_CLI", "").strip())
+
+
+def get_my_emails():
+    """Your Proton addresses, used to find your answer to invitations.
+
+    Taken from PROTON_EMAIL (comma separated) or USER_EMAIL.
+    """
+    raw = get("PROTON_EMAIL", "").strip() or get("USER_EMAIL", "").strip()
+    return {e.strip().lower() for e in raw.split(",") if e.strip()}
+
+
+def is_my_event(event, my_emails):
+    """Tell if a proton-cli event is one you are attending.
+
+    Like for Google Calendar, keep events you accepted or not answered yet (or you organize),
+    and skip the ones you declined or answered "maybe", or where you are not invited.
+    Events without attendees are yours.
+    """
+    attendees = event.get("attendees") or []
+    if not attendees:
+        return True
+    if any(isinstance(a, str) for a in attendees):
+        # proton-cli older than MIN_VERSION: answers are not available, keep the event
+        return True
+    if (event.get("organizer") or "").lower() in my_emails:
+        return True
+    return any(
+        (a.get("email") or "").lower() in my_emails and a.get("answer") in MY_ANSWERS
+        for a in attendees
+    )
 
 
 def is_proton_calendar(calendar_id):
@@ -77,7 +112,7 @@ def _cli_path():
     return path
 
 
-def _run(args):
+def _run(args, json_output=True):
     env = {
         **os.environ,
         # Get event times in the configured timezone
@@ -90,7 +125,7 @@ def _run(args):
     profile = get("PROTON_PROFILE", "").strip()
     if profile:
         env["PROTON_PROFILE"] = profile
-    command = [_cli_path(), *args, "--output", "json"]
+    command = [_cli_path(), *args, *(["--output", "json"] if json_output else [])]
     LOGGER.debug(f"Running {' '.join(command)}")
     try:
         result = subprocess.run(command, env=env, capture_output=True, text=True, check=False)
@@ -100,10 +135,42 @@ def _run(args):
         reason = EXIT_CODES.get(result.returncode, f"exit code {result.returncode}")
         stderr = result.stderr.strip()
         raise ProtonError(f"proton-cli failed ({reason})" + (f": {stderr}" if stderr else ""))
+    if not json_output:
+        return result.stdout
     try:
         return json.loads(result.stdout)
     except json.JSONDecodeError as err:
         raise ProtonError(f"Cannot parse proton-cli output: {err}") from err
+
+
+def parse_version(text):
+    """Extract the version as a tuple of integers from `proton -v` output."""
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", text or "")
+    return tuple(int(n) for n in match.groups()) if match else None
+
+
+def check_version():
+    """Check proton-cli is available and recent enough.
+
+    Errors running proton-cli are raised, while an old (or unknown) version only returns
+    a warning message (or None if everything is fine).
+    """
+    output = _run(["-v"], json_output=False).strip()
+    LOGGER.debug(f"proton-cli version: {output}")
+    version = parse_version(output)
+    minimum = parse_version(MIN_VERSION)
+    if version is None:
+        return (
+            f'Cannot detect proton-cli version from "{output}". '
+            f"Version {MIN_VERSION} or later is required"
+        )
+    if version < minimum:
+        return (
+            f"proton-cli {'.'.join(map(str, version))} found, but {MIN_VERSION} or later is "
+            "required: events you declined or answered \"maybe\" will not be skipped. "
+            "Please upgrade proton-cli"
+        )
+    return None
 
 
 def normalize_event(event):
@@ -138,12 +205,20 @@ def normalize_event(event):
 def get_events_at(date):
     """Get events from all Proton calendars in a specific date.
 
-    Cancelled events are ignored.
+    Cancelled events and events you are not attending are ignored.
     """
     day = date.strftime("%Y-%m-%d")
     data = _run(["calendar", "events", "list", "--after", day, "--before", day, "--limit", "0"])
-    events = data.get("events", [])
-    return [normalize_event(e) for e in events if e.get("status") != "cancelled"]
+    my_emails = get_my_emails()
+    events = []
+    for event in data.get("events", []):
+        if event.get("status") == "cancelled":
+            continue
+        if not is_my_event(event, my_emails):
+            LOGGER.debug(f"Skipping {event.get('title')}: not attending")
+            continue
+        events.append(normalize_event(event))
+    return events
 
 
 def get_calendar_ids(kinds):

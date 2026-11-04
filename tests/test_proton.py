@@ -10,6 +10,7 @@ from haunts import download, proton
 
 CONFIG = {
     "PROTON_CLI": "proton",
+    "USER_EMAIL": "me@bopen.eu",
     "TIMEZONE": "Europe/Rome",
 }
 
@@ -100,13 +101,15 @@ class TestProton(unittest.TestCase):
                     "events": [
                         proton_event(),
                         proton_event(id="ev2", status="cancelled"),
+                        proton_event(id="ev3", attendees=[attendee("me@bopen.eu", "accepted")]),
+                        proton_event(id="ev4", attendees=[attendee("me@bopen.eu", "declined")]),
                     ],
                     "count": 2,
                 }
             )
         )
         events = proton.get_events_at(date(2026, 10, 31))
-        self.assertEqual([e["id"] for e in events], ["ev1"])
+        self.assertEqual([e["id"] for e in events], ["ev1", "ev3"])
         args, kwargs = run.call_args
         self.assertEqual(
             args[0],
@@ -148,6 +151,34 @@ class TestProton(unittest.TestCase):
         with self.assertRaises(proton.ProtonError):
             proton.get_events_at(date(2026, 10, 31))
 
+    def test_parse_version(self):
+        self.assertEqual(proton.parse_version("proton version 5.4.0"), (5, 4, 0))
+        self.assertEqual(proton.parse_version("proton version v12.0.3-dev"), (12, 0, 3))
+        self.assertIsNone(proton.parse_version("proton version dev"))
+
+    @mock.patch("haunts.proton.subprocess.run")
+    def test_check_version(self, run):
+        for output, warning in (
+            ("proton version 5.4.0\n", None),
+            ("proton version 6.0.1\n", None),
+            ("proton version 5.3.9\n", "5.3.9 found"),
+            ("proton version dev\n", "Cannot detect"),
+        ):
+            with self.subTest(output=output):
+                run.return_value = completed(output)
+                result = proton.check_version()
+                if warning:
+                    self.assertIn(warning, result)
+                else:
+                    self.assertIsNone(result)
+        self.assertEqual(run.call_args.args[0], ["/usr/local/bin/proton", "-v"])
+
+    @mock.patch("haunts.proton.subprocess.run")
+    def test_check_version_failure(self, run):
+        run.return_value = completed(returncode=7, stderr="boom")
+        with self.assertRaises(proton.ProtonError):
+            proton.check_version()
+
     def test_missing_cli(self):
         with mock.patch("haunts.proton.shutil.which", lambda cli: None):
             with self.assertRaisesRegex(proton.ProtonError, "not found"):
@@ -171,6 +202,70 @@ class TestProton(unittest.TestCase):
             run.call_args.args[0][1:],
             ["calendar", "settings", "calendars", "list", "--limit", "0", "--output", "json"],
         )
+
+
+def attendee(email, answer="pending", role="required"):
+    return {"answer": answer, "email": email, "role": role}
+
+
+class TestMyEvents(unittest.TestCase):
+    ME = {"l.fabbri@bopen.eu"}
+
+    def is_mine(self, **kwargs):
+        return proton.is_my_event(proton_event(**kwargs), self.ME)
+
+    def test_no_attendees(self):
+        self.assertTrue(self.is_mine(attendees=[]))
+
+    def test_answers(self):
+        for answer, expected in (
+            ("accepted", True),
+            ("pending", True),
+            ("tentative", False),
+            ("declined", False),
+        ):
+            with self.subTest(answer=answer):
+                self.assertEqual(
+                    self.is_mine(
+                        attendees=[
+                            attendee("other@bopen.eu", "accepted"),
+                            attendee("L.Fabbri@bopen.eu", answer),
+                        ]
+                    ),
+                    expected,
+                )
+
+    def test_not_invited(self):
+        self.assertFalse(self.is_mine(attendees=[attendee("other@bopen.eu", "accepted")]))
+
+    def test_organizer(self):
+        self.assertTrue(
+            self.is_mine(
+                organizer="l.fabbri@bopen.eu", attendees=[attendee("other@bopen.eu", "declined")]
+            )
+        )
+
+    def test_old_proton_cli(self):
+        # Answers are not available: keep the event
+        self.assertTrue(self.is_mine(attendees=["other@bopen.eu"]))
+
+
+class TestMyEmails(unittest.TestCase):
+    def emails(self, **options):
+        with mock.patch("haunts.proton.get", lambda name, default=None: options.get(name, default)):
+            return proton.get_my_emails()
+
+    def test_user_email(self):
+        self.assertEqual(self.emails(USER_EMAIL="l.fabbri@bopen.eu"), {"l.fabbri@bopen.eu"})
+
+    def test_proton_email(self):
+        self.assertEqual(
+            self.emails(USER_EMAIL="l.fabbri@bopen.eu", PROTON_EMAIL=" Luca@Proton.me, l@pm.me "),
+            {"luca@proton.me", "l@pm.me"},
+        )
+
+    def test_none(self):
+        self.assertEqual(self.emails(), set())
 
 
 @mock.patch("haunts.proton.get_calendar_ids", lambda kinds: {"holidays_cal"})

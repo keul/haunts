@@ -211,9 +211,10 @@ Proton Calendar support
 Proton provides no public API (calendar data is end-to-end encrypted), so *haunts* relies on
 `proton-cli <https://proton-cli.lerchster.dev/>`_, an unofficial command line client:
 
-* `Install proton-cli <https://proton-cli.lerchster.dev/install/>`_ and log in once with ``proton account login``
+* `Install proton-cli <https://proton-cli.lerchster.dev/install/>`_ (version 5.4.0 or later) and log in once with ``proton account login``
 * Enable Proton support in ``haunts.ini`` by setting the ``PROTON_CLI`` option to the proton-cli executable name or path
   (``PROTON_CLI=proton``). Optionally, set ``PROTON_PROFILE`` to use a specific proton-cli profile
+* If your Proton address is not ``USER_EMAIL``, set ``PROTON_EMAIL`` (comma separated, if you have more than one)
 * In the config sheet, put ``proton:<calendar id>`` in the ``read_from`` column of the project that should collect events from a Proton calendar.
   Get calendar ids by running ``proton calendar settings calendars list --output json``
 
@@ -229,11 +230,14 @@ When enabled:
 * When reading from both Google and Proton, Proton events that are copies of an event already read from Google
   (same iCalendar UID, like invitations sent by Google) are skipped
 * Cancelled events are ignored
+* Like for Google Calendar, only events you are attending are read: events you organize, or where you accepted
+  or not answered yet the invitation. Events you declined or answered "maybe", or where you are not invited, are ignored.
+  Events without attendees are always read
 * The ``Link`` column is filled with a ``proton:<calendar id>/<event id>`` reference, used to not add the same event twice
+* proton-cli version is checked at the beginning (``proton -v``): with a version older than 5.4.0
+  a warning is printed, and events you declined or answered "maybe" are not skipped
 * If proton-cli is not installed or you are not logged in, the command fails without writing anything.
   Use ``--skip proton`` to read from Google Calendar only (see below)
-
-Known limitations: proton-cli does not expose your response to invitations, so events you declined are not filtered out (as happens for Google Calendar).
 
 Choosing services to read from
 ------------------------------

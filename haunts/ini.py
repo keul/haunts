@@ -36,10 +36,14 @@ CONTROLLER_SHEET_DOCUMENT_ID=<Google Sheet Document Id here>
 # READ_FROM_SERVICES=google,proton
 
 # Proton Calendar support for `--execute read` (optional).
-# Requires proton-cli (https://proton-cli.lerchster.dev/) installed and logged in
+# Requires proton-cli 5.4.0 or later (https://proton-cli.lerchster.dev/) installed and logged in
 # (`proton account login`). Set to the proton-cli executable name or path to enable it.
 # Default is empty: Proton Calendar is not used
 # PROTON_CLI=proton
+
+# Your Proton email address(es), comma separated, used to find your answer to invitations.
+# Default is USER_EMAIL
+# PROTON_EMAIL=<your Proton email here>
 
 # proton-cli profile to use (optional)
 # PROTON_PROFILE=

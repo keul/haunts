@@ -15,6 +15,7 @@ def config(**options):
 
 class TestGetReadServices(unittest.TestCase):
     def services(self, skip=(), **options):
+        options.setdefault("USER_EMAIL", "me@bopen.eu")
         fake = config(**options)
         with mock.patch("haunts.download.get", fake), mock.patch("haunts.proton.get", fake):
             return download.get_read_services(skip=skip)
@@ -56,6 +57,21 @@ class TestGetReadServices(unittest.TestCase):
     def test_skip_explicit_proton_without_cli(self):
         self.assertEqual(
             self.services(skip=["proton"], READ_FROM_SERVICES="google,proton"), ["google"]
+        )
+
+    def test_proton_without_email(self):
+        with self.assertRaisesRegex(download.ConfigurationError, "PROTON_EMAIL"):
+            self.services(PROTON_CLI="proton", USER_EMAIL="")
+
+    def test_proton_email_only(self):
+        self.assertEqual(
+            self.services(
+                READ_FROM_SERVICES="proton",
+                PROTON_CLI="proton",
+                USER_EMAIL="",
+                PROTON_EMAIL="me@pm.me",
+            ),
+            ["proton"],
         )
 
     def test_skip_everything(self):

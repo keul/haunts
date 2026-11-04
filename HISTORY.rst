@@ -9,6 +9,9 @@ History
   Enable it with the ``PROTON_CLI`` option
 - Proton events not in a configured calendar get the project of their organizer, when it's a
   calendar in the config sheet. Proton copies of events already read from Google are skipped
+- Proton events you declined, answered "maybe" or are not invited to are skipped, like for Google.
+  Requires proton-cli 5.4.0 or later (checked at start, a warning is printed for older versions).
+  New ``PROTON_EMAIL`` option, when your Proton address is not ``USER_EMAIL``
 - New ``READ_FROM_SERVICES`` option and ``--skip`` parameter, to choose calendar services
   used by ``--execute read``
 

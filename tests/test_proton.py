@@ -221,7 +221,7 @@ class TestMyEvents(unittest.TestCase):
         for answer, expected in (
             ("accepted", True),
             ("pending", True),
-            ("tentative", False),
+            ("tentative", True),
             ("declined", False),
         ):
             with self.subTest(answer=answer):

@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 
+import click
 from dateutil import parser as date_parser
 
 from . import LOGGER
@@ -23,8 +24,8 @@ PROTON_CATCH_ALL = f"{PROTON_PREFIX}*"
 
 # Minimum proton-cli version supported (attendees with their answer)
 MIN_VERSION = "5.4.0"
-# Answers to invitations of events you are attending
-MY_ANSWERS = {"accepted", "pending"}
+# Answers to invitations of events you are (maybe) attending
+MY_ANSWERS = {"accepted", "tentative", "pending"}
 # Kinds of calendars not read by the catch-all, unless explicitly configured in the config sheet
 IGNORED_CALENDAR_KINDS = {"holidays"}
 
@@ -62,8 +63,8 @@ def get_my_emails():
 def is_my_event(event, my_emails):
     """Tell if a proton-cli event is one you are attending.
 
-    Like for Google Calendar, keep events you accepted or not answered yet (or you organize),
-    and skip the ones you declined or answered "maybe", or where you are not invited.
+    Like for Google Calendar, keep events you accepted, answered "maybe" or not answered yet
+    (or you organize), and skip the ones you declined or where you are not invited.
     Events without attendees are yours.
     """
     attendees = event.get("attendees") or []
@@ -167,7 +168,7 @@ def check_version():
     if version < minimum:
         return (
             f"proton-cli {'.'.join(map(str, version))} found, but {MIN_VERSION} or later is "
-            "required: events you declined or answered \"maybe\" will not be skipped. "
+            "required: events you declined will not be skipped. "
             "Please upgrade proton-cli"
         )
     return None
@@ -215,7 +216,10 @@ def get_events_at(date):
         if event.get("status") == "cancelled":
             continue
         if not is_my_event(event, my_emails):
-            LOGGER.debug(f"Skipping {event.get('title')}: not attending")
+            click.echo(
+                f"Skipping event {event.get('title') or 'No summary'} (from Proton): "
+                "declined, or you are not invited"
+            )
             continue
         events.append(normalize_event(event))
     return events

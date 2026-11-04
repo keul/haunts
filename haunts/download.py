@@ -32,7 +32,8 @@ def filter_my_events(events):
     Take a list of Google Calendar events and returns events created by USER_EMAIL
     or events that have USER_EMAIL in the attendees list.
 
-    Exclude events where the user has declined the invitation.
+    Exclude events where the user has declined the invitation: events answered with "maybe"
+    are read, to be reviewed later in the sheet.
     """
     USER_EMAIL = get("USER_EMAIL")
     if USER_EMAIL is None:
@@ -43,7 +44,7 @@ def filter_my_events(events):
         elif USER_EMAIL in [
             attendee.get("email")
             for attendee in event.get("attendees", [])
-            if attendee.get("responseStatus") in ["accepted", "needsAction"]
+            if attendee.get("responseStatus") in ["accepted", "tentative", "needsAction"]
         ]:
             yield event
 

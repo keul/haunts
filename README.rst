@@ -230,12 +230,12 @@ When enabled:
 * When reading from both Google and Proton, Proton events that are copies of an event already read from Google
   (same iCalendar UID, like invitations sent by Google) are skipped
 * Cancelled events are ignored
-* Like for Google Calendar, only events you are attending are read: events you organize, or where you accepted
-  or not answered yet the invitation. Events you declined or answered "maybe", or where you are not invited, are ignored.
+* Like for Google Calendar, only events you are (maybe) attending are read: events you organize, or where you accepted,
+  answered "maybe" or not answered yet the invitation. Events you declined, or where you are not invited, are ignored.
   Events without attendees are always read
 * The ``Link`` column is filled with a ``proton:<calendar id>/<event id>`` reference, used to not add the same event twice
 * proton-cli version is checked at the beginning (``proton -v``): with a version older than 5.4.0
-  a warning is printed, and events you declined or answered "maybe" are not skipped
+  a warning is printed, and events you declined are not skipped
 * If proton-cli is not installed or you are not logged in, the command fails without writing anything.
   Use ``--skip proton`` to read from Google Calendar only (see below)
 

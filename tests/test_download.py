@@ -79,6 +79,30 @@ class TestGetReadServices(unittest.TestCase):
             self.services(skip=["google", "proton"], PROTON_CLI="proton")
 
 
+class TestFilterMyEvents(unittest.TestCase):
+    def test_answers(self):
+        def event(id, status):
+            return {
+                "id": id,
+                "creator": {"email": "other@bopen.eu"},
+                "attendees": [{"email": "me@bopen.eu", "responseStatus": status}],
+            }
+
+        events = [
+            event("accepted", "accepted"),
+            event("tentative", "tentative"),
+            event("needsAction", "needsAction"),
+            event("declined", "declined"),
+            {"id": "mine", "creator": {"email": "me@bopen.eu"}},
+            {"id": "not invited", "creator": {"email": "other@bopen.eu"}},
+        ]
+        with mock.patch("haunts.download.get", config(USER_EMAIL="me@bopen.eu")):
+            self.assertEqual(
+                [e["id"] for e in download.filter_my_events(events)],
+                ["accepted", "tentative", "needsAction", "mine"],
+            )
+
+
 class TestGetCalendarsById(unittest.TestCase):
     def test_ids_and_read_from(self):
         sheet = mock.MagicMock()

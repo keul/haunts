@@ -49,6 +49,22 @@ def filter_my_events(events):
             yield event
 
 
+def format_hours(duration):
+    """Format a timedelta as hours, like "1 hour" or "1.5 hours"."""
+    hours = round(duration.total_seconds() / 3600, 2)
+    value = f"{hours:g}"
+    return f"{value} hour" if hours == 1 else f"{value} hours"
+
+
+def describe_timing(event, start_time, duration):
+    """Describe when an event happens, for log messages."""
+    if "date" in event["start"]:
+        # All-day event
+        days = duration.days
+        return "full day" if days <= 1 else f"full day ({days} days)"
+    return f"at {start_time} (lasts {format_hours(duration)})"
+
+
 def get_events_at(events_service, calendar_id, date):
     """Get all events from a calendar in a specific date."""
     start_datetime = datetime.combine(date, datetime.min.time())
@@ -265,7 +281,7 @@ def extract_events(config_dir, sheet, day, services=(GOOGLE,)):
             continue
         click.echo(
             f"Adding new event {event_summary} ({project} - from {event.get('source', 'Google')}) "
-            f"{f'at {start_time}' if duration else 'full day'} to selected sheet"
+            f"{describe_timing(event, start_time, duration)} to selected sheet"
         )
         append_line(
             sheet_service,

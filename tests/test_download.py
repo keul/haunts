@@ -1,6 +1,7 @@
 """Tests for `--execute read` services selection."""
 
 import unittest
+from datetime import time, timedelta
 from unittest import mock
 
 from haunts import download, spreadsheet
@@ -101,6 +102,30 @@ class TestFilterMyEvents(unittest.TestCase):
                 [e["id"] for e in download.filter_my_events(events)],
                 ["accepted", "tentative", "needsAction", "mine"],
             )
+
+
+class TestDescribeTiming(unittest.TestCase):
+    def test_timed(self):
+        event = {"start": {"dateTime": "2026-11-10T10:30:00+01:00"}}
+        for minutes, expected in (
+            (60, "at 10:30:00 (lasts 1 hour)"),
+            (90, "at 10:30:00 (lasts 1.5 hours)"),
+            (120, "at 10:30:00 (lasts 2 hours)"),
+            (20, "at 10:30:00 (lasts 0.33 hours)"),
+        ):
+            with self.subTest(minutes=minutes):
+                self.assertEqual(
+                    download.describe_timing(event, time(10, 30), timedelta(minutes=minutes)),
+                    expected,
+                )
+
+    def test_full_day(self):
+        event = {"start": {"date": "2026-11-10"}}
+        self.assertEqual(download.describe_timing(event, time(0, 0), timedelta(days=1)), "full day")
+        self.assertEqual(
+            download.describe_timing(event, time(0, 0), timedelta(days=3)),
+            "full day (3 days)",
+        )
 
 
 class TestGetCalendarsById(unittest.TestCase):

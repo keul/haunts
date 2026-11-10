@@ -198,7 +198,68 @@ The spreadsheet must also contains a *configuration sheet* (default name is ``co
   Read events from this (optional) calendar id instead of the canonical one (the one defined in the ``id`` column).
   This makes possible to *read* events from a calendar, but store them in another ones.
 
+  It can also reference a Proton calendar, using the ``proton:<calendar id>`` format
+  (see "Proton Calendar support" below).
+
 Values in the ``name`` column are valid values for the ``Project`` column introduced above.
+
+Proton Calendar support
+-----------------------
+
+``--execute read`` can also read events from `Proton Calendar <https://proton.me/calendar>`_, in addition to Google Calendar.
+
+Proton provides no public API (calendar data is end-to-end encrypted), so *haunts* relies on
+`proton-cli <https://proton-cli.lerchster.dev/>`_, an unofficial command line client:
+
+* `Install proton-cli <https://proton-cli.lerchster.dev/install/>`_ (version 5.4.0 or later) and log in once with ``proton account login``
+* Enable Proton support in ``haunts.ini`` by setting the ``PROTON_CLI`` option to the proton-cli executable name or path
+  (``PROTON_CLI=proton``). Optionally, set ``PROTON_PROFILE`` to use a specific proton-cli profile
+* If your Proton address is not ``USER_EMAIL``, set ``PROTON_EMAIL`` (comma separated, if you have more than one)
+* In the config sheet, put ``proton:<calendar id>`` in the ``read_from`` column of the project that should collect events from a Proton calendar.
+  Get calendar ids by running ``proton calendar settings calendars list --output json``
+
+When enabled:
+
+* Events from Proton calendars referenced in the config sheet are added to the related project.
+  Like any other ``read_from`` calendar, ``Event id`` and ``Action`` are left empty, so a later ``sync`` will copy them to the Google Calendar of the project
+* Events from any other Proton calendar (like invitations you accepted) are added with the project of their organizer,
+  when the organizer is a Google calendar listed in the config sheet (``id`` or ``read_from`` column, the latter taking precedence).
+  This happens when a Google calendar of your organization invites you.
+  Otherwise they are added with the ``???`` project.
+  Holidays calendars are ignored (unless explicitly referenced in the config sheet)
+* When reading from both Google and Proton, Proton events that are copies of an event already read from Google
+  (same iCalendar UID, like invitations sent by Google) are skipped
+* Cancelled events are ignored
+* Like for Google Calendar, only events you are (maybe) attending are read: events you organize, or where you accepted,
+  answered "maybe" or not answered yet the invitation. Events you declined, or where you are not invited, are ignored.
+  Events without attendees are always read
+* The ``Link`` column is filled with a ``proton:<calendar id>/<event id>`` reference, used to not add the same event twice
+* proton-cli version is checked at the beginning (``proton -v``): with a version older than 5.4.0
+  a warning is printed, and events you declined are not skipped
+* If proton-cli is not installed or you are not logged in, the command fails without writing anything.
+  Use ``--skip proton`` to read from Google Calendar only (see below)
+
+Choosing services to read from
+------------------------------
+
+By default ``--execute read`` reads from both Google Calendar and Proton Calendar (when ``PROTON_CLI`` is set).
+Use the ``READ_FROM_SERVICES`` option in ``haunts.ini`` to choose services to read from, as a comma separated list
+of ``google`` and ``proton``. For example, to read from Proton Calendar only:
+
+.. code-block:: ini
+
+   READ_FROM_SERVICES=proton
+
+When ``READ_FROM_SERVICES`` explicitly includes ``proton``, ``PROTON_CLI`` is required.
+
+Services can also be excluded for a single run with ``--skip`` (can be provided multiple times):
+
+.. code-block:: bash
+
+   haunts --execute read --skip proton May
+   haunts --execute read --skip google May
+
+Note that Google Sheets and Google Calendar credentials are still needed: the sheet is always on Google, and ``sync`` writes events on Google Calendar.
 
 How events will be filled
 -------------------------

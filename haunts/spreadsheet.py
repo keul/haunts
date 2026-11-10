@@ -299,6 +299,30 @@ def get_calendars_names(sheet, flat=True):
     return names
 
 
+def get_calendars_by_id(sheet):
+    """Map every Google calendar id in the config sheet ("id" and "read_from" columns) to a
+    project name.
+
+    Calendars in "read_from" column take precedence, then the first occurence wins.
+    """
+    RANGE = f"{get('CONTROLLER_SHEET_NAME', 'config')}!A2:C"
+    calendars = (
+        sheet.values().get(spreadsheetId=get("CONTROLLER_SHEET_DOCUMENT_ID"), range=RANGE).execute()
+    )
+    read_from_ids = {}
+    ids = {}
+    for cols in calendars.get("values", []):
+        if len(cols) < 2:
+            continue
+        id, alias = cols[0], cols[1]
+        read_from = cols[2] if len(cols) > 2 else None
+        if id:
+            ids.setdefault(id, alias)
+        if read_from:
+            read_from_ids.setdefault(read_from, alias)
+    return {**ids, **read_from_ids}
+
+
 def get_first_empty_line(sheet, month):
     """Get the first empty line in a month."""
     RANGE = f"{month}!A1:A"

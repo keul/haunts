@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 """Console script for haunts."""
+
 import datetime
 import os
 import sys
@@ -14,7 +15,8 @@ from .calendars import init as init_calendars
 from .spreadsheet import sync_report
 from .report import report
 from . import actions
-from .download import extract_events
+from .download import ConfigurationError, extract_events, get_read_services
+from .proton import ProtonError
 
 
 @click.command()
@@ -77,6 +79,17 @@ from .download import extract_events
     help='filter report glob search inside "Activity" columns. ',
 )
 @click.option(
+    "--skip",
+    "-s",
+    type=click.Choice(["google", "proton"], case_sensitive=False),
+    multiple=True,
+    help=(
+        "do not read events from this calendar service, even if enabled in configuration. "
+        'Used only with "--execute read". Can be provided multiple times.'
+    ),
+    default=[],
+)
+@click.option(
     "--version",
     "-v",
     "show_version",
@@ -92,6 +105,7 @@ def main(
     project=[],
     overtime=False,
     filter=None,
+    skip=[],
     show_version=False,
 ):
     """
@@ -116,9 +130,7 @@ def main(
 
     config = Path(os.path.expanduser(f"{config_dir.resolve()}/haunts.ini"))
     if not run_configuration and not config_dir.is_dir():
-        click.echo(
-            f"Configuation file at {config.resolve()} not found. Use --config to create it."
-        )
+        click.echo(f"Configuation file at {config.resolve()} not found. Use --config to create it.")
         sys.exit(1)
     if run_configuration and not config_dir.is_dir():
         click.echo(f"Creating config directory at {config_dir.resolve()}")
@@ -126,9 +138,7 @@ def main(
         click.echo("…created")
         if not config.is_file():
             create_default(config)
-            click.echo(
-                f"Manage you settings at {config.resolve()} before running haunts again."
-            )
+            click.echo(f"Manage you settings at {config.resolve()} before running haunts again.")
             sys.exit(1)
 
     if not run_configuration and not sheet:
@@ -171,11 +181,25 @@ def main(
             filter=filter,
         )
     elif execute == "read":
-        extract_events(
-            config_dir,
-            sheet,
-            day=day[0] if day else datetime.date.today().strftime("%Y-%m-%d"),
-        )
+        try:
+            services = get_read_services(skip=[s.lower() for s in skip])
+            extract_events(
+                config_dir,
+                sheet,
+                day=day[0] if day else datetime.date.today().strftime("%Y-%m-%d"),
+                services=services,
+            )
+        except ConfigurationError as err:
+            click.echo(Fore.RED + str(err) + Style.RESET_ALL)
+            sys.exit(1)
+        except ProtonError as err:
+            click.echo(
+                Fore.RED
+                + f"Cannot read Proton Calendar: {err}\n"
+                + "Use --skip proton to not read from Proton Calendar."
+                + Style.RESET_ALL
+            )
+            sys.exit(1)
     return 0
 
 

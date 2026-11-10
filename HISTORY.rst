@@ -1,7 +1,7 @@
 History
 =======
 
-0.8.1 (unreleased)
+0.9.0 (2026-11-10)
 ------------------
 
 - Column names can be customized from .ini file
